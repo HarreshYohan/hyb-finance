@@ -1,0 +1,9 @@
+# Credentials — NEVER commit real keys
+config.js
+
+# macOS
+.DS_Store
+
+# Editors
+.vscode/
+*.swp
