@@ -1,0 +1,12 @@
+{
+  "name": "centa",
+  "version": "1.0.0",
+  "description": "Centa — Every cent. In control. Personal finance tracker.",
+  "scripts": {
+    "build": "node scripts/build-config.js",
+    "dev": "npx serve ."
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
