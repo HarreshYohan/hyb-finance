@@ -1,5 +1,5 @@
 -- ══════════════════════════════════════════════════════════════════
---  HYB Finance — Production Supabase Schema
+--  Centa — Production Supabase Schema
 --  Run this entire file in your Supabase SQL Editor.
 --  All tables use auth.users for identity — no custom users table needed.
 -- ══════════════════════════════════════════════════════════════════
@@ -164,24 +164,31 @@ ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_prefs    ENABLE ROW LEVEL SECURITY;
 
--- Helper macro (avoids repetition)
+-- RLS policies — DROP first so the file is safe to re-run
 DO $$ DECLARE tbl TEXT;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY['transactions','debts','goals','budgets','recurring_transactions','tags','notification_prefs']
   LOOP
     EXECUTE format('
-      CREATE POLICY IF NOT EXISTS "select_own_%1$s" ON %1$s FOR SELECT  USING (auth.uid() = user_id);
-      CREATE POLICY IF NOT EXISTS "insert_own_%1$s" ON %1$s FOR INSERT  WITH CHECK (auth.uid() = user_id);
-      CREATE POLICY IF NOT EXISTS "update_own_%1$s" ON %1$s FOR UPDATE  USING (auth.uid() = user_id);
-      CREATE POLICY IF NOT EXISTS "delete_own_%1$s" ON %1$s FOR DELETE  USING (auth.uid() = user_id);
+      DROP POLICY IF EXISTS "select_own_%1$s" ON %1$s;
+      DROP POLICY IF EXISTS "insert_own_%1$s" ON %1$s;
+      DROP POLICY IF EXISTS "update_own_%1$s" ON %1$s;
+      DROP POLICY IF EXISTS "delete_own_%1$s" ON %1$s;
+      CREATE POLICY "select_own_%1$s" ON %1$s FOR SELECT  USING (auth.uid() = user_id);
+      CREATE POLICY "insert_own_%1$s" ON %1$s FOR INSERT  WITH CHECK (auth.uid() = user_id);
+      CREATE POLICY "update_own_%1$s" ON %1$s FOR UPDATE  USING (auth.uid() = user_id);
+      CREATE POLICY "delete_own_%1$s" ON %1$s FOR DELETE  USING (auth.uid() = user_id);
     ', tbl);
   END LOOP;
 END $$;
 
 -- profiles uses id instead of user_id
-CREATE POLICY IF NOT EXISTS "select_own_profile" ON profiles FOR SELECT  USING (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "insert_own_profile" ON profiles FOR INSERT  WITH CHECK (auth.uid() = id);
-CREATE POLICY IF NOT EXISTS "update_own_profile" ON profiles FOR UPDATE  USING (auth.uid() = id);
+DROP POLICY IF EXISTS "select_own_profile" ON profiles;
+DROP POLICY IF EXISTS "insert_own_profile" ON profiles;
+DROP POLICY IF EXISTS "update_own_profile" ON profiles;
+CREATE POLICY "select_own_profile" ON profiles FOR SELECT  USING (auth.uid() = id);
+CREATE POLICY "insert_own_profile" ON profiles FOR INSERT  WITH CHECK (auth.uid() = id);
+CREATE POLICY "update_own_profile" ON profiles FOR UPDATE  USING (auth.uid() = id);
 
 -- ═══════════════════════════════════════════════════════════════════
 --  UPDATED_AT trigger (keeps updated_at fresh on every UPDATE)

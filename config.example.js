@@ -10,7 +10,7 @@ window.APP_CONFIG = {
     anonKey: 'YOUR_SUPABASE_ANON_KEY',
   },
   app: {
-    name: 'HYB Finance',
+    name: 'Centa',
     version: '1.0.0',
     defaultCurrency: 'LKR',
   },

@@ -4,8 +4,8 @@
  * never needs to know about chart instances or canvas management.
  */
 
-import { state, getViewMonth, txByMonth, sumInc, sumExp } from './state.js';
-import { allMonths, monthLabel } from './state.js';
+import { state, getViewMonth, txByMonth, sumInc, sumExp, allMonths } from './state.js';
+import { monthLabel } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
 
 const CHART_INSTANCES = {};
