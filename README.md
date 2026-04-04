@@ -1,4 +1,4 @@
-# HYB Finance
+# Centa
 
 Personal finance tracker — income, expenses, debts, goals, and budgets.
 Cloud-backed via Supabase. Deployable as a static web app.
@@ -6,7 +6,7 @@ Cloud-backed via Supabase. Deployable as a static web app.
 ## Project Structure
 
 ```
-HYB Finance/
+Centa/
 ├── index.html              # HTML shell — zero inline JS
 ├── config.js               # ⚠️  GITIGNORED — real credentials (copy from config.example.js)
 ├── config.example.js       # Committed template — fill in your values

@@ -72,7 +72,7 @@ export function totalOwedToMe() {
 }
 
 /** Effective budget limit for a category */
-export function getBudgetLimit(category) {
+export async function getBudgetLimit(category) {
   const { DEFAULT_BUDGET_LIMITS } = await import('./constants.js').then(m => m);
   return state.budgets[category] ?? DEFAULT_BUDGET_LIMITS[category] ?? 0;
 }

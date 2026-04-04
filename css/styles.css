@@ -331,3 +331,8 @@ a { color: var(--blue); text-decoration: none; }
 /* ── DEBT CARD ─────────────────────────────────────────────────── */
 .debt-actions { display:flex;gap:6px;flex-wrap:wrap }
 .debt-due.overdue { color:var(--red) }
+
+/* ── CENTA BRANDING ─────────────────────────────────────────────── */
+.auth-tagline { font-size:13px; color:var(--gold); font-weight:500; letter-spacing:.02em; margin-bottom:10px; }
+.logo-tagline { font-size:10px; color:var(--text3); letter-spacing:.04em; font-weight:400; margin-left:2px; align-self:flex-end; margin-bottom:2px; }
+.h-left { align-items: baseline; }

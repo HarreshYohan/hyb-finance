@@ -71,13 +71,15 @@ export async function handleAuth() {
     if (res.error) {
       return setAuthBtnReady(btn, res.error.message);
     }
-    data = res.data;
-    // Supabase may require email confirmation — handle both flows
-    if (!data.session) {
-      setAuthBtnReady(btn, '');
-      showAuthError('Account created! Check your email to confirm your account.');
-      return;
+    // If a session exists immediately → email confirmation is OFF → auto-logged in
+    if (res.data?.session) {
+      btn.disabled = false;
+      return; // onAuthStateChange fires → app loads
     }
+    // Email confirmation is ON — user must click the link first
+    setAuthBtnReady(btn, '');
+    showAuthError('Account created! Check your email inbox (and spam folder) and click the confirmation link before signing in.');
+    return;
   } else if (error) {
     return setAuthBtnReady(btn, error.message);
   }
