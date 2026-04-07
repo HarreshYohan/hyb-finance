@@ -5,7 +5,8 @@
 
 import { state, getViewMonth, txByMonth, sumInc, sumExp } from '../state.js';
 import { fmtCurrency, getCurrentWeekDates, todayStr } from '../utils.js';
-import { EXPENSE_CATEGORIES, DEFAULT_BUDGET_LIMITS } from '../constants.js';
+import { DEFAULT_BUDGET_LIMITS } from '../constants.js';
+import { getExpenseCategories } from '../categories.js';
 import { upsertBudget } from '../db.js';
 import { toast } from './toast.js';
 
@@ -19,7 +20,7 @@ function _renderBudgetRows() {
   const spent = {};
   txs.forEach(t => { spent[t.category] = (spent[t.category] ?? 0) + Number(t.amount); });
 
-  document.getElementById('budgetRows').innerHTML = EXPENSE_CATEGORIES.map(cat => {
+  document.getElementById('budgetRows').innerHTML = getExpenseCategories().map(cat => {
     const lim    = state.budgets[cat] ?? DEFAULT_BUDGET_LIMITS[cat] ?? 0;
     const s      = spent[cat] ?? 0;
     const p      = lim > 0 ? Math.min(100, Math.round((s / lim) * 100)) : 0;

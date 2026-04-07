@@ -6,7 +6,7 @@
 
 import { state } from '../state.js';
 import { uid, todayStr } from '../utils.js';
-import { INCOME_CATEGORIES, EXPENSE_CATEGORIES, DEBT_CATEGORIES } from '../constants.js';
+import { getIncomeCategories, getExpenseCategories } from '../categories.js';
 import {
   upsertTransaction, deleteTransaction,
   upsertDebt, upsertGoal,
@@ -41,7 +41,7 @@ export function closeTxModal() {
 
 export function setTxType(type) {
   _txTypeVal = type;
-  const cats = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+  const cats = type === 'income' ? getIncomeCategories() : getExpenseCategories();
   $('tx-cat').innerHTML = cats.map(c => `<option>${c}</option>`).join('');
   $('ttIn').className  = 'type-toggle' + (type === 'income'  ? ' sel-in'  : '');
   $('ttOut').className = 'type-toggle' + (type === 'expense' ? ' sel-out' : '');

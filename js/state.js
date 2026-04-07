@@ -6,14 +6,16 @@
 
 /** @type {AppState} */
 export const state = {
-  tx:          [],   // Transaction[]
-  debts:       [],   // Debt[]
-  goals:       [],   // Goal[]
-  budgets:     {},   // { [category: string]: number }
-  recurring:   [],   // RecurringTransaction[]
-  profile:     null, // Profile | null
-  viewMonth:   '',   // YYYY-MM — currently viewed month ('' = current)
-  reminderOff: '',   // YYYY-MM-DD — user dismissed reminder for this day
+  tx:               [],   // Transaction[]
+  debts:            [],   // Debt[]
+  goals:            [],   // Goal[]
+  budgets:          {},   // { [category: string]: number }
+  recurring:        [],   // RecurringTransaction[]
+  profile:          null, // Profile | null
+  financialPlan:    null, // FinancialPlan | null — from wizard
+  customCategories: { income: [], expense: [] }, // DB-backed custom categories
+  viewMonth:        '',   // YYYY-MM — currently viewed month ('' = current)
+  reminderOff:      '',   // YYYY-MM-DD — user dismissed reminder for this day
 };
 
 /** Reset state to blank (e.g. on sign out) */
@@ -75,6 +77,25 @@ export function totalOwedToMe() {
 export async function getBudgetLimit(category) {
   const { DEFAULT_BUDGET_LIMITS } = await import('./constants.js').then(m => m);
   return state.budgets[category] ?? DEFAULT_BUDGET_LIMITS[category] ?? 0;
+}
+
+/**
+ * Returns true when the signed-in user is the app owner.
+ * Owner email is set in config.js → APP_CONFIG.owner.email
+ */
+export function isOwner() {
+  const ownerEmail = window.APP_CONFIG?.owner?.email;
+  if (!ownerEmail) return false;
+  return state.profile?.email === ownerEmail;
+}
+
+/**
+ * Effective plan for the current user.
+ * Owner always gets 'lifetime', regardless of what's stored in DB.
+ */
+export function getUserPlan() {
+  if (isOwner()) return 'lifetime';
+  return state.profile?.plan ?? 'free';
 }
 
 /** All unique months present in transactions, plus current month */

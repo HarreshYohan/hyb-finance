@@ -17,9 +17,17 @@ CREATE TABLE IF NOT EXISTS profiles (
   plan            TEXT NOT NULL DEFAULT 'free' CHECK (plan IN ('free', 'pro', 'lifetime')),
   revenue_cat_id  TEXT,
   avatar_url      TEXT,
+  onboarding_completed BOOLEAN DEFAULT false,
+  estimated_income NUMERIC(14,2) DEFAULT 0,
+  target_savings_rate NUMERIC(14,2) DEFAULT 20.00,
   created_at      TIMESTAMPTZ DEFAULT NOW(),
   updated_at      TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Idempotent patch for existing databases
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS estimated_income NUMERIC(14,2) DEFAULT 0;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS target_savings_rate NUMERIC(14,2) DEFAULT 20.00;
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -127,7 +135,74 @@ CREATE TABLE IF NOT EXISTS recurring_transactions (
 CREATE INDEX IF NOT EXISTS idx_recurring_user_active ON recurring_transactions (user_id, active);
 
 -- ─────────────────────────────────────────────────────────────────
---  7. TAGS  (Pro plan feature)
+--  7. FINANCIAL PLANS  (one row per user — created via onboarding wizard)
+-- ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS financial_plans (
+  id                     UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id                UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE UNIQUE,
+  -- Income
+  monthly_income         NUMERIC(14,2) NOT NULL DEFAULT 0,
+  income_freq            TEXT NOT NULL DEFAULT 'monthly' CHECK (income_freq IN ('monthly','biweekly','weekly')),
+  -- Fixed expenses (from wizard)
+  rent                   NUMERIC(14,2) NOT NULL DEFAULT 0,
+  utilities              NUMERIC(14,2) NOT NULL DEFAULT 0,
+  loan_emis              NUMERIC(14,2) NOT NULL DEFAULT 0,
+  insurance              NUMERIC(14,2) NOT NULL DEFAULT 0,
+  fixed_expenses         NUMERIC(14,2) NOT NULL DEFAULT 0,
+  -- Variable expenses
+  food                   NUMERIC(14,2) NOT NULL DEFAULT 0,
+  transport              NUMERIC(14,2) NOT NULL DEFAULT 0,
+  entertainment          NUMERIC(14,2) NOT NULL DEFAULT 0,
+  shopping               NUMERIC(14,2) NOT NULL DEFAULT 0,
+  variable_expenses      NUMERIC(14,2) NOT NULL DEFAULT 0,
+  -- Goals
+  primary_goal           TEXT,
+  goal_amount            NUMERIC(14,2),
+  goal_months            INTEGER,
+  -- Profile
+  risk_profile           TEXT NOT NULL DEFAULT 'moderate' CHECK (risk_profile IN ('conservative','moderate','aggressive')),
+  lifestyle              TEXT NOT NULL DEFAULT 'single' CHECK (lifestyle IN ('single','couple','family')),
+  dependents             INTEGER NOT NULL DEFAULT 0,
+  -- Allocations (percentages)
+  alloc_needs            NUMERIC(5,2) NOT NULL DEFAULT 50,
+  alloc_wants            NUMERIC(5,2) NOT NULL DEFAULT 30,
+  alloc_savings          NUMERIC(5,2) NOT NULL DEFAULT 10,
+  alloc_invest           NUMERIC(5,2) NOT NULL DEFAULT 10,
+  -- Computed targets
+  emergency_fund_target  NUMERIC(14,2) NOT NULL DEFAULT 0,
+  monthly_savings_target NUMERIC(14,2) NOT NULL DEFAULT 0,
+  monthly_invest_target  NUMERIC(14,2) NOT NULL DEFAULT 0,
+  target_needs           NUMERIC(14,2) NOT NULL DEFAULT 0,
+  target_wants           NUMERIC(14,2) NOT NULL DEFAULT 0,
+  created_at             TIMESTAMPTZ DEFAULT NOW(),
+  updated_at             TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_financial_plans_user ON financial_plans (user_id);
+
+-- ─────────────────────────────────────────────────────────────────
+--  8. CUSTOM CATEGORIES  (user-defined income/expense categories)
+-- ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS custom_categories (
+  id        UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id   UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  name      TEXT NOT NULL,
+  type      TEXT NOT NULL CHECK (type IN ('income','expense')),
+  color     TEXT DEFAULT '#5C5A55',
+  UNIQUE (user_id, name, type)
+);
+
+CREATE INDEX IF NOT EXISTS idx_custom_cats_user ON custom_categories (user_id);
+
+-- ─────────────────────────────────────────────────────────────────
+--  Add Stripe columns to profiles (safe to re-run — IF NOT EXISTS)
+-- ─────────────────────────────────────────────────────────────────
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_customer_id     TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS stripe_subscription_id TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS plan_expires_at        TIMESTAMPTZ;
+
+-- ─────────────────────────────────────────────────────────────────
+--  9. TAGS  (Pro plan feature)
 -- ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS tags (
   id        TEXT PRIMARY KEY,
@@ -161,13 +236,15 @@ ALTER TABLE debts                 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE goals                 ENABLE ROW LEVEL SECURITY;
 ALTER TABLE budgets               ENABLE ROW LEVEL SECURITY;
 ALTER TABLE recurring_transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE financial_plans       ENABLE ROW LEVEL SECURITY;
+ALTER TABLE custom_categories     ENABLE ROW LEVEL SECURITY;
 ALTER TABLE tags                  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE notification_prefs    ENABLE ROW LEVEL SECURITY;
 
 -- RLS policies — DROP first so the file is safe to re-run
 DO $$ DECLARE tbl TEXT;
 BEGIN
-  FOREACH tbl IN ARRAY ARRAY['transactions','debts','goals','budgets','recurring_transactions','tags','notification_prefs']
+  FOREACH tbl IN ARRAY ARRAY['transactions','debts','goals','budgets','recurring_transactions','tags','notification_prefs','custom_categories']
   LOOP
     EXECUTE format('
       DROP POLICY IF EXISTS "select_own_%1$s" ON %1$s;
@@ -181,6 +258,16 @@ BEGIN
     ', tbl);
   END LOOP;
 END $$;
+
+-- financial_plans RLS (uses user_id)
+DROP POLICY IF EXISTS "select_own_financial_plans" ON financial_plans;
+DROP POLICY IF EXISTS "insert_own_financial_plans" ON financial_plans;
+DROP POLICY IF EXISTS "update_own_financial_plans" ON financial_plans;
+DROP POLICY IF EXISTS "delete_own_financial_plans" ON financial_plans;
+CREATE POLICY "select_own_financial_plans" ON financial_plans FOR SELECT  USING (auth.uid() = user_id);
+CREATE POLICY "insert_own_financial_plans" ON financial_plans FOR INSERT  WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "update_own_financial_plans" ON financial_plans FOR UPDATE  USING (auth.uid() = user_id);
+CREATE POLICY "delete_own_financial_plans" ON financial_plans FOR DELETE  USING (auth.uid() = user_id);
 
 -- profiles uses id instead of user_id
 DROP POLICY IF EXISTS "select_own_profile" ON profiles;
@@ -205,7 +292,8 @@ DO $$ DECLARE tbl TEXT;
 BEGIN
   FOREACH tbl IN ARRAY ARRAY[
     'profiles','transactions','debts','goals','budgets',
-    'recurring_transactions','notification_prefs'
+    'recurring_transactions','notification_prefs',
+    'financial_plans','custom_categories'
   ]
   LOOP
     EXECUTE format('

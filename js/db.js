@@ -43,7 +43,7 @@ export async function fetchProfile() {
     const { data: created } = await db.from('profiles').upsert({ id: user.id }).select().single();
     data = created;
   }
-  state.profile = data;
+  state.profile = { ...data, email: user.email };
   return data;
 }
 
