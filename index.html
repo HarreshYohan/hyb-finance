@@ -5,12 +5,17 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Centa — Every cent. In control.</title>
 <meta name="description" content="Centa: Every cent. In control. — Track income, expenses, debts and goals with cloud-backed security.">
+
+<!-- PWA & Security -->
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#111110">
+<link rel="apple-touch-icon" href="/assets/icon.svg">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://lekqsmqrygqnssblwofx.supabase.co https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none';">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-<!-- CDN libs (non-module, loaded before module scripts) -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<!-- App config (no credentials committed — see config.example.js) -->
 <script src="config.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 </head>
@@ -18,7 +23,7 @@
 
 <!-- ═══════════════════ LOADING SCREEN ══════════════════════════ -->
 <div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-  <div style="font-size:22px;font-weight:600;color:var(--text)">HYB<span style="color:var(--gold)">.</span>Finance</div>
+  <div style="font-size:22px;font-weight:600;color:var(--text)">Centa</div>
   <div style="font-size:13px;color:var(--text3)">Loading…</div>
 </div>
 
@@ -52,25 +57,33 @@
   <div class="h-left">
     <div class="logo">Centa</div>
     <div class="logo-tagline">Every cent. In control.</div>
+    <span id="ownerBadge" class="owner-badge" style="display:none">👑</span>
     <div class="month-pill">
       <select id="monthSel" onchange="App.changeMonth()"></select>
     </div>
   </div>
   <div class="h-right">
     <span class="today-label" id="todayLabel">—</span>
+    <span class="header-name" id="headerDisplayName"></span>
     <button class="btn-primary" onclick="Modals.openTx()">+ Transaction</button>
+    <button class="btn-icon" onclick="Settings.open()" title="Settings" aria-label="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+      </svg>
+    </button>
+    <button class="btn-logout" onclick="App.signOut()">Sign Out</button>
   </div>
 </div>
 
-<!-- TABS -->
+<!-- TOP TABS (desktop) -->
 <div class="tabs">
-  <button class="tab active" onclick="App.showTab('today',this)">Today</button>
-  <button class="tab" onclick="App.showTab('log',this)">Transactions</button>
-  <button class="tab" onclick="App.showTab('budget',this)">Budget</button>
-  <button class="tab" onclick="App.showTab('debts',this)">Debts</button>
-  <button class="tab" onclick="App.showTab('goals',this)">Goals</button>
-  <button class="tab" onclick="App.showTab('plan',this)">My Plan</button>
-  <button class="tab" onclick="App.showTab('charts',this)">Charts</button>
+  <button class="tab active" data-tab="today"  onclick="App.showTab('today',this)">Today</button>
+  <button class="tab"        data-tab="log"    onclick="App.showTab('log',this)">Transactions</button>
+  <button class="tab"        data-tab="budget" onclick="App.showTab('budget',this)">Budget</button>
+  <button class="tab"        data-tab="debts"  onclick="App.showTab('debts',this)">Debts</button>
+  <button class="tab"        data-tab="goals"  onclick="App.showTab('goals',this)">Goals</button>
+  <button class="tab"        data-tab="plan"   onclick="App.showTab('plan',this)">My Plan</button>
+  <button class="tab"        data-tab="charts" onclick="App.showTab('charts',this)">Charts</button>
 </div>
 
 <!-- TODAY -->
@@ -130,7 +143,7 @@
 
 <!-- DEBTS -->
 <div class="panel" id="tab-debts">
-  <div class="sh"><div><div class="sh-title">Debts & Receivables</div><div class="sh-sub">Track what you owe and what's owed to you</div></div><button class="add-btn" onclick="Modals.openDebt()">+ Add Debt</button></div>
+  <div class="sh"><div><div class="sh-title">Debts &amp; Receivables</div><div class="sh-sub">Track what you owe and what's owed to you</div></div><button class="add-btn" onclick="Modals.openDebt()">+ Add Debt</button></div>
   <div class="g2" style="margin-bottom:16px">
     <div class="kpi"><div class="kpi-val red" id="ds-owe">LKR 0</div><div class="kpi-lbl">I Owe Others</div><div class="kpi-hint" id="ds-owe-h">0 active</div></div>
     <div class="kpi"><div class="kpi-val green" id="ds-owed">LKR 0</div><div class="kpi-lbl">Owed To Me</div><div class="kpi-hint" id="ds-owed-h">0 active</div></div>
@@ -144,11 +157,8 @@
   <div class="g-auto" id="goalsGrid"></div>
 </div>
 
-<!-- MY PLAN (static content — personalised to HYB) -->
-<div class="panel" id="tab-plan">
-  <div class="sh"><div><div class="sh-title">Your Financial Plan</div><div class="sh-sub">Personalised strategy based on your income and goals</div></div></div>
-  <div class="card" style="margin-bottom:12px"><div class="card-title" style="margin-bottom:10px">Weekly Income Target</div><div id="weeklyTargetBox">Open this tab to load your plan.</div></div>
-</div>
+<!-- MY PLAN -->
+<div class="panel" id="tab-plan"></div>
 
 <!-- CHARTS -->
 <div class="panel" id="tab-charts">
@@ -241,9 +251,99 @@
   </div>
 </div>
 
+<!-- Settings Modal -->
+<div class="overlay" id="settingsOverlay">
+  <div class="modal settings-modal" style="position:relative">
+    <button class="modal-x" onclick="Settings.close()">✕</button>
+    <div class="modal-title">Settings</div>
+    <div class="modal-sub">Account, categories &amp; preferences</div>
+    <div id="settingsBody"></div>
+  </div>
+</div>
+
+<!-- Onboarding Modal (Force user setup) -->
+<div class="overlay" id="onboardingOverlay">
+  <div class="modal" style="position:relative;text-align:center;">
+    <div style="font-size:32px;margin-bottom:10px;">👋</div>
+    <div class="modal-title">Welcome to Centa</div>
+    <div class="modal-sub" style="margin-bottom:20px;">Let's set up your financial engine. We don't store your data locally; everything connects securely to the cloud.</div>
+    
+    <div class="form-grid" style="text-align:left;">
+      <div class="field full">
+        <label>What is your estimated monthly income?</label>
+        <input id="ob-income" type="number" min="0" placeholder="e.g. 100000">
+      </div>
+      <div class="field full">
+        <label>Target savings rate (%)</label>
+        <input id="ob-savrate" type="number" min="0" max="100" value="20">
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;">Industry standard is 20%. Adjust as needed.</div>
+      </div>
+    </div>
+    
+    <div class="modal-footer" style="margin-top:20px;justify-content:center;">
+      <button class="btn-save neutral" id="ob-submit" onclick="Onboarding.submit()">Start My Plan</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ BOTTOM NAV (mobile) ══════════════════════ -->
+<nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+  <button class="bnav-item active" data-tab="today" onclick="App.showTab('today',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+    <span class="bnav-label">Today</span>
+  </button>
+  <button class="bnav-item" data-tab="log" onclick="App.showTab('log',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+      <circle cx="3" cy="6" r="1" fill="currentColor"/><circle cx="3" cy="12" r="1" fill="currentColor"/><circle cx="3" cy="18" r="1" fill="currentColor"/>
+    </svg>
+    <span class="bnav-label">Log</span>
+  </button>
+  <button class="bnav-item" data-tab="budget" onclick="App.showTab('budget',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <rect x="18" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="2" y="13" width="4" height="8" rx="1"/>
+    </svg>
+    <span class="bnav-label">Budget</span>
+  </button>
+  <button class="bnav-item" data-tab="debts" onclick="App.showTab('debts',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
+    </svg>
+    <span class="bnav-label">Debts</span>
+  </button>
+  <button class="bnav-item" data-tab="goals" onclick="App.showTab('goals',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
+    </svg>
+    <span class="bnav-label">Goals</span>
+  </button>
+  <button class="bnav-item" data-tab="plan" onclick="App.showTab('plan',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    </svg>
+    <span class="bnav-label">Plan</span>
+  </button>
+  <button class="bnav-item" data-tab="charts" onclick="App.showTab('charts',this)">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
+    </svg>
+    <span class="bnav-label">Charts</span>
+  </button>
+</nav>
+
 </div><!-- END #mainApp -->
 
-<!-- Entry point (type=module enables ES module imports) -->
 <script type="module" src="js/app.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then(reg => console.log('ServiceWorker registered:', reg.scope))
+        .catch(err => console.error('ServiceWorker registration failed:', err));
+    });
+  }
+</script>
 </body>
 </html>

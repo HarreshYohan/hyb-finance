@@ -1,0 +1,16 @@
+{
+  "name": "Centa Finance",
+  "short_name": "Centa",
+  "description": "Every cent. In control. Track income, expenses, debts, and goals.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#111110",
+  "theme_color": "#111110",
+  "icons": [
+    {
+      "src": "/assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}

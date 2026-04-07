@@ -2,7 +2,7 @@
  * js/app.js — Main orchestrator
  */
 import { initApp, handleAuth, signOut } from './auth.js';
-import { state, allMonths, getViewMonth } from './state.js';
+import { state, allMonths, getViewMonth, isOwner } from './state.js';
 import { monthLabel, fmtDate, fmtCurrency, todayStr } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
 import { renderKPIs, renderWeekGoalBar } from './ui/kpi.js';
@@ -11,6 +11,7 @@ import { renderBudget, saveLimit } from './ui/budget.js';
 import { renderDebts, settleDebt, partialPay, deleteDebt } from './ui/debts.js';
 import { renderGoals, depositGoal, deleteGoal } from './ui/goals.js';
 import { buildCharts } from './charts.js';
+import { renderPlan }  from './ui/plan.js';
 import { toast } from './ui/toast.js';
 import {
   openTxModal, closeTxModal, setTxType, saveTx, deleteTx,
@@ -18,6 +19,8 @@ import {
   openDebtModal, closeDebtModal, setDebtDir, saveDebt,
   openGoalModal, closeGoalModal, saveGoal,
 } from './ui/modals.js';
+import { openSettings, closeSettings, addCat, removeCat, saveName } from './ui/settings.js';
+import { checkOnboarding, submitOnboarding } from './ui/onboarding.js';
 
 initApp(render);
 
@@ -31,6 +34,8 @@ export function render() {
   renderDebts();
   renderGoals();
   _checkReminder();
+  _applyOwnerMode();
+  checkOnboarding();
 }
 
 function _updateHeader() {
@@ -38,6 +43,17 @@ function _updateHeader() {
   if (el) el.textContent = new Date().toLocaleDateString('en-GB', {
     weekday: 'short', day: 'numeric', month: 'short', year: 'numeric',
   });
+  // Display name in header
+  const dn = document.getElementById('headerDisplayName');
+  if (dn) {
+    const name = state.profile?.display_name || state.profile?.email?.split('@')[0] || '';
+    dn.textContent = name;
+  }
+}
+
+function _applyOwnerMode() {
+  const badge = document.getElementById('ownerBadge');
+  if (badge) badge.style.display = isOwner() ? 'inline-flex' : 'none';
 }
 
 function _initMonthSel() {
@@ -113,7 +129,8 @@ function _populateLogFilters() {
     cats.map(c => `<option value="${c}"${c===sc?' selected':''}>${c}</option>`).join('');
 }
 
-// ── Global bridges ────────────────────────────────────────────────────────────
+// ── Global bridges ─────────────────────────────────────────────────────────────
+
 window.App = {
   render,
   editTx:   id => openTxModal(id),
@@ -122,18 +139,31 @@ window.App = {
   editGoal: id => openGoalModal(id),
   signOut:  () => signOut(),
   changeMonth: () => { state.viewMonth = document.getElementById('monthSel').value; render(); },
-  showTab: (id, el) => {
+  showTab: (id, _el) => {
     document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.getElementById('tab-'+id).classList.add('active');
-    el.classList.add('active');
+    // Deactivate both top tabs and bottom nav items
+    document.querySelectorAll('.tab, .bnav-item').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-'+id)?.classList.add('active');
+    // Activate all nav elements with matching data-tab (top + bottom)
+    document.querySelectorAll(`[data-tab="${id}"]`).forEach(t => t.classList.add('active'));
     if (id === 'charts') buildCharts();
+    if (id === 'plan')   renderPlan();
     if (id === 'log') { _populateLogFilters(); _renderLog(); }
   },
   renderLog: _renderLog,
   dismissReminder: () => {
     state.reminderOff = todayStr();
     document.getElementById('reminderBanner')?.classList.remove('show');
+  },
+  upgradePlan: (plan) => {
+    const email = state.profile?.email ?? '';
+    const cfg   = window.APP_CONFIG?.stripe;
+    const link  = plan === 'pro' ? cfg?.proLink : cfg?.lifetimeLink;
+    if (!link) {
+      toast('Payment not configured yet — set up Stripe links in config.js');
+      return;
+    }
+    window.open(`${link}?prefilled_email=${encodeURIComponent(email)}`, '_blank');
   },
 };
 
@@ -161,7 +191,19 @@ window.Goals = {
 
 window.Auth = { handleAuth };
 
-['txOverlay','debtOverlay','goalOverlay'].forEach(id => {
+window.Settings = {
+  open:       openSettings,
+  close:      closeSettings,
+  addCat,
+  removeCat,
+  saveName,
+};
+
+window.Onboarding = {
+  submit: () => submitOnboarding(render)
+};
+
+['txOverlay','debtOverlay','goalOverlay','settingsOverlay'].forEach(id => {
   document.getElementById(id)?.addEventListener('click', function(e) {
     if (e.target === this) this.classList.remove('open');
   });
