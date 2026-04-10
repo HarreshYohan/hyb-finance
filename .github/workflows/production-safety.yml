@@ -1,0 +1,23 @@
+name: Production Release Safety
+
+on:
+  push:
+    branches:
+      - main  # This ensures the backup/tag happens ONLY after a successful merge to main
+
+jobs:
+  create-release-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Generate Version Tag
+        run: |
+          # Creates a unique timestamped tag (e.g., release-20260410)
+          # This is your immutable backup point.
+          TAG_NAME="release-$(date +'%Y%m%d-%H%M')"
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
