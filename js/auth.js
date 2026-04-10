@@ -39,9 +39,9 @@ export async function initApp(onReady) {
 
 async function _onSignedIn(onReady) {
   await fetchProfile();
-  await syncAll();
   showMainApp();
-  onReady?.();
+  // syncAll will call onReady() instantly from cache, then again after network fetch
+  syncAll(onReady);
 }
 
 function _onSignedOut() {
@@ -66,9 +66,12 @@ export async function handleAuth() {
   let { data, error } = await db.auth.signInWithPassword({ email, password });
 
   if (error && error.message.toLowerCase().includes('invalid login')) {
-    // User probably doesn't exist — try sign up
+    // User might not exist — try sign up
     const res = await db.auth.signUp({ email, password });
     if (res.error) {
+      if (res.error.message.toLowerCase().includes('already registered')) {
+        return setAuthBtnReady(btn, 'Incorrect password for this email address.');
+      }
       return setAuthBtnReady(btn, res.error.message);
     }
     // If a session exists immediately → email confirmation is OFF → auto-logged in

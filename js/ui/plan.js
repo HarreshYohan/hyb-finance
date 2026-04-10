@@ -8,6 +8,7 @@
 import { state, getViewMonth, txByMonth, sumInc, sumExp, allMonths, isOwner, getUserPlan } from '../state.js';
 import { fmtCurrency } from '../utils.js';
 import { CATEGORY_COLOR } from '../constants.js';
+import { renderInvestmentSection } from './invest.js';
 
 let _raf = null;
 let _pts = [];
@@ -459,6 +460,8 @@ ${_spendingBreakdown(txs)}
 ${_savingsProjection(Math.max(0, avgNet))}
 ${_debtTimeline()}
 ${_goalForecasts(avgNet)}
+
+${(state.profile?.investment_enabled !== false) ? renderInvestmentSection({ avgNet, estInc, tgtRate }) : ''}
 
 <div class="plan-section-label" style="margin-top:8px">Choose Your Plan</div>
 <div class="plan-pricing-sub">Unlock everything Centa has to offer</div>

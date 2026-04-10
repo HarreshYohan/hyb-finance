@@ -5,33 +5,52 @@
  */
 
 import { state } from './state.js';
+import { getCachedState, updateCache, clearCache } from './cache.js';
 
 const { url, anonKey } = window.APP_CONFIG.supabase;
 export const db = window.supabase.createClient(url, anonKey);
 
 // ── Sync (read all user data into state) ──────────────────────────────────────
 
-export async function syncAll() {
+export async function syncAll(renderCallback) {
   const userId = state.profile?.id;
   if (!userId) return;
 
-  const [txRes, debtsRes, goalsRes, budRes, recRes] = await Promise.all([
-    db.from('transactions').select('*').order('date', { ascending: false }),
-    db.from('debts').select('*').order('created_at', { ascending: false }),
-    db.from('goals').select('*').order('created_at', { ascending: false }),
-    db.from('budgets').select('*'),
-    db.from('recurring_transactions').select('*').eq('active', true),
-  ]);
+  // Try cache first for instant UI
+  const cache = getCachedState();
+  if (cache && cache.data) {
+    Object.assign(state, cache.data);
+    if (renderCallback) renderCallback();
+  }
 
-  state.tx = (txRes.data ?? []).map(mapTx);
-  state.debts = (debtsRes.data ?? []).map(mapDebt);
-  state.goals = (goalsRes.data ?? []).map(mapGoal);
-  state.recurring = (recRes.data ?? []).map(mapRecurring);
+  try {
+    const [txRes, debtsRes, goalsRes, budRes, recRes] = await Promise.all([
+      db.from('transactions').select('*').order('date', { ascending: false }),
+      db.from('debts').select('*').order('created_at', { ascending: false }),
+      db.from('goals').select('*').order('created_at', { ascending: false }),
+      db.from('budgets').select('*'),
+      db.from('recurring_transactions').select('*').eq('active', true),
+    ]);
 
-  state.budgets = {};
-  (budRes.data ?? []).forEach(b => {
-    state.budgets[b.category] = Number(b.limit_amount);
-  });
+    state.tx = (txRes.data ?? []).map(mapTx);
+    state.debts = (debtsRes.data ?? []).map(mapDebt);
+    state.goals = (goalsRes.data ?? []).map(mapGoal);
+    state.recurring = (recRes.data ?? []).map(mapRecurring);
+
+    state.budgets = {};
+    (budRes.data ?? []).forEach(b => {
+      state.budgets[b.category] = Number(b.limit_amount);
+    });
+
+    // Update cache with fresh data
+    updateCache(state);
+    
+    // Call render again to update UI with fresh data if it changed
+    if (renderCallback) renderCallback();
+
+  } catch (err) {
+    console.error('Sync failed:', err);
+  }
 }
 
 export async function fetchProfile() {

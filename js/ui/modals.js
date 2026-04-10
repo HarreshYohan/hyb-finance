@@ -1,7 +1,8 @@
 /**
  * js/ui/modals.js
  * All modal open/close logic and form save handlers.
- * Modals share one open/close pattern: overlay.classList.toggle('open').
+ * Data flow: validate → DB write → update local state → close modal → render.
+ * Never update local state before confirming the DB write succeeded.
  */
 
 import { state } from '../state.js';
@@ -17,17 +18,17 @@ const $ = id => document.getElementById(id);
 
 // ── Transaction Modal ─────────────────────────────────────────────────────────
 
-let _editTxId   = null;
-let _txTypeVal  = 'income';
+let _editTxId  = null;
+let _txTypeVal = 'income';
 
 export function openTxModal(id = null) {
   _editTxId = id;
   const t   = id ? state.tx.find(x => x.id === id) : null;
   setTxType(t?.type ?? 'income');
-  $('tx-desc').value   = t?.desc ?? '';
+  $('tx-desc').value   = t?.desc   ?? '';
   $('tx-amount').value = t?.amount ?? '';
-  $('tx-date').value   = t?.date ?? todayStr();
-  $('tx-note').value   = t?.note ?? '';
+  $('tx-date').value   = t?.date   ?? todayStr();
+  $('tx-note').value   = t?.note   ?? '';
   $('txTitle').textContent = id ? 'Edit Transaction' : 'Add Transaction';
   if (t) $('tx-cat').value = t.category;
   $('txOverlay').classList.add('open');
@@ -57,15 +58,33 @@ export async function saveTx(onSaved) {
   const cat    = $('tx-cat').value;
   const note   = $('tx-note').value.trim();
 
-  if (!desc)            { toast('Enter a description'); return; }
-  if (!amount || amount <= 0) { toast('Enter a valid amount'); return; }
-  if (!date)            { toast('Select a date'); return; }
+  if (!desc)            { toast('Enter a description', 'warning'); return; }
+  if (!amount || amount <= 0) { toast('Enter a valid amount', 'warning'); return; }
+  if (!date)            { toast('Select a date', 'warning'); return; }
+
+  const btn      = $('txSave');
+  const origText = btn.textContent;
+  btn.textContent = 'Saving…';
+  btn.disabled    = true;
 
   const entry = {
-    id: _editTxId ?? uid(), desc, amount, date,
-    category: cat, note, type: _txTypeVal, ts: Date.now(),
+    id:       _editTxId ?? uid(),
+    desc, amount, date, category: cat, note,
+    type:     _txTypeVal,
+    ts:       Date.now(),
   };
 
+  const { error } = await upsertTransaction(entry);
+
+  btn.textContent = origText;
+  btn.disabled    = false;
+
+  if (error) {
+    toast('Save failed — check your connection and try again', 'error');
+    return; // keep modal open, don't update local state
+  }
+
+  // DB confirmed — now update local state
   if (_editTxId) {
     const i = state.tx.findIndex(t => t.id === _editTxId);
     if (i >= 0) state.tx[i] = entry;
@@ -73,20 +92,27 @@ export async function saveTx(onSaved) {
     state.tx.push(entry);
   }
 
-  const { error } = await upsertTransaction(entry);
-  if (error) console.error('[saveTx]', error);
-
   closeTxModal();
   onSaved?.();
-  toast(_editTxId ? 'Updated ✓' : 'Saved ✓');
+  toast(_editTxId ? 'Updated ✓' : 'Saved ✓', 'success');
 }
 
 export async function deleteTx(id, onDeleted) {
-  if (!confirm('Delete this transaction?')) return;
-  state.tx = state.tx.filter(t => t.id !== id);
-  await deleteTransaction(id);
-  onDeleted?.();
-  toast('Deleted');
+  // Use custom confirm overlay instead of browser confirm()
+  const { showConfirm } = await import('./dialogs.js');
+  const t = state.tx.find(x => x.id === id);
+  showConfirm({
+    title:     'Delete Transaction',
+    msg:       t ? `Delete "${t.desc}" (${t.type === 'income' ? '+' : '-'}${t.amount.toLocaleString()})?` : 'Delete this transaction?',
+    label:     'Delete',
+    onConfirm: async () => {
+      state.tx = state.tx.filter(t => t.id !== id);
+      const { error } = await deleteTransaction(id);
+      if (error) toast('Delete failed', 'error');
+      else toast('Deleted', 'success');
+      onDeleted?.();
+    },
+  });
 }
 
 // ── Autocomplete ──────────────────────────────────────────────────────────────
@@ -122,8 +148,8 @@ export function pickAC(desc, amount, cat, type) {
 
 // ── Debt Modal ────────────────────────────────────────────────────────────────
 
-let _editDebtId  = null;
-let _debtDirVal  = 'owe';
+let _editDebtId = null;
+let _debtDirVal = 'owe';
 
 export function openDebtModal(id = null) {
   _editDebtId = id;
@@ -150,12 +176,16 @@ export function setDebtDir(dir) {
 export async function saveDebt(onSaved) {
   const name   = $('d-name').value.trim();
   const amount = Number($('d-amount').value);
-  if (!name || !amount) { toast('Fill in name and amount'); return; }
+  if (!name)   { toast('Enter a name', 'warning'); return; }
+  if (!amount) { toast('Enter a valid amount', 'warning'); return; }
+
+  const btn      = document.querySelector('#debtOverlay .btn-save');
+  const origText = btn?.textContent;
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
 
   const entry = {
     id:       _editDebtId ?? uid(),
-    name,
-    amount,
+    name, amount,
     paid:     Number($('d-paid').value)  || 0,
     due:      $('d-due').value           || null,
     category: $('d-cat').value,
@@ -164,6 +194,15 @@ export async function saveDebt(onSaved) {
     ts:       Date.now(),
   };
 
+  const { error } = await upsertDebt(entry);
+
+  if (btn) { btn.textContent = origText; btn.disabled = false; }
+
+  if (error) {
+    toast('Save failed — check your connection', 'error');
+    return;
+  }
+
   if (_editDebtId) {
     const i = state.debts.findIndex(d => d.id === _editDebtId);
     if (i >= 0) state.debts[i] = entry;
@@ -171,12 +210,9 @@ export async function saveDebt(onSaved) {
     state.debts.push(entry);
   }
 
-  const { error } = await upsertDebt(entry);
-  if (error) console.error('[saveDebt]', error);
-
   closeDebtModal();
   onSaved?.();
-  toast('Saved ✓');
+  toast('Saved ✓', 'success');
 }
 
 // ── Goal Modal ────────────────────────────────────────────────────────────────
@@ -200,17 +236,30 @@ export function closeGoalModal() { $('goalOverlay').classList.remove('open'); }
 export async function saveGoal(onSaved) {
   const name   = $('g-name').value.trim();
   const target = Number($('g-target').value);
-  if (!name || !target) { toast('Fill in name and target'); return; }
+  if (!name)   { toast('Enter a goal name', 'warning'); return; }
+  if (!target) { toast('Enter a target amount', 'warning'); return; }
+
+  const btn      = document.querySelector('#goalOverlay .btn-save');
+  const origText = btn?.textContent;
+  if (btn) { btn.textContent = 'Saving…'; btn.disabled = true; }
 
   const entry = {
     id:       _editGoalId ?? uid(),
-    name,
-    target,
+    name, target,
     saved:    Number($('g-saved').value) || 0,
     deadline: $('g-deadline').value      || null,
     color:    $('g-color').value,
     note:     $('g-note').value.trim(),
   };
+
+  const { error } = await upsertGoal(entry);
+
+  if (btn) { btn.textContent = origText; btn.disabled = false; }
+
+  if (error) {
+    toast('Save failed — check your connection', 'error');
+    return;
+  }
 
   if (_editGoalId) {
     const i = state.goals.findIndex(g => g.id === _editGoalId);
@@ -219,12 +268,9 @@ export async function saveGoal(onSaved) {
     state.goals.push(entry);
   }
 
-  const { error } = await upsertGoal(entry);
-  if (error) console.error('[saveGoal]', error);
-
   closeGoalModal();
   onSaved?.();
-  toast('Goal saved ✓');
+  toast('Goal saved ✓', 'success');
 }
 
 // ── Private ───────────────────────────────────────────────────────────────────
