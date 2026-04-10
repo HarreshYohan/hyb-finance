@@ -5,6 +5,9 @@ on:
     branches:
       - main  # This ensures the backup/tag happens ONLY after a successful merge to main
 
+permissions:
+  contents: write
+
 jobs:
   create-release-tag:
     runs-on: ubuntu-latest
