@@ -7,6 +7,7 @@ import { state } from '../state.js';
 import { fmtCurrency, fmtDate, pct, monthsUntil } from '../utils.js';
 import { updateGoalSaved, deleteGoal as dbDeleteGoal } from '../db.js';
 import { toast } from './toast.js';
+import { quickInput, showConfirm } from './dialogs.js';
 
 export function renderGoals() {
   const grid = document.getElementById('goalsGrid');
@@ -15,7 +16,8 @@ export function renderGoals() {
     grid.innerHTML = `
       <div class="empty" style="grid-column:1/-1">
         <div class="empty-ico">🎯</div>
-        <div class="empty-txt">No goals yet.<br>Add your first financial target.</div>
+        <div class="empty-txt">No goals yet.<br>Add your first financial target and start building toward it.</div>
+        <button class="add-btn" style="margin-top:12px" onclick="Modals.openGoal()">+ Add Goal</button>
       </div>`;
     return;
   }
@@ -25,12 +27,13 @@ export function renderGoals() {
     const rem       = g.target - g.saved;
     const months    = monthsUntil(g.deadline);
     const needPerMo = months && rem > 0 ? Math.ceil(rem / months) : null;
+    const complete  = p >= 100;
 
     return `
-      <div class="goal-card">
+      <div class="goal-card${complete ? ' goal-complete' : ''}">
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:2px">
-          <div class="goal-name">${g.name}</div>
-          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:500;color:${g.color}">${p}%</span>
+          <div class="goal-name">${g.name}${complete ? ' 🎉' : ''}</div>
+          <span style="font-family:'IBM Plex Mono',monospace;font-size:14px;font-weight:600;color:${g.color}">${p}%</span>
         </div>
         <div class="goal-note">${g.note ?? ''}${g.deadline ? ' · By ' + fmtDate(g.deadline) : ''}</div>
         <div class="goal-stats">
@@ -41,10 +44,10 @@ export function renderGoals() {
           <div class="prog-bar" style="width:${p}%;background:${g.color}"></div>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-bottom:10px">
-          Remaining: ${fmtCurrency(rem)}${needPerMo ? ' · Need ' + fmtCurrency(needPerMo) + '/mo' : ''}
+          ${complete ? 'Goal reached! 🏆' : `${fmtCurrency(rem)} to go${needPerMo ? ' · ' + fmtCurrency(needPerMo) + '/mo needed' : ''}`}
         </div>
         <div class="goal-actions">
-          <button class="dbt-btn dbt-settle" style="flex:2" onclick="Goals.deposit('${g.id}')">+ Add Savings</button>
+          ${!complete ? `<button class="dbt-btn dbt-settle" style="flex:2" onclick="Goals.deposit('${g.id}')">+ Add Savings</button>` : ''}
           <button class="dbt-btn dbt-edit" onclick="App.editGoal('${g.id}')">Edit</button>
           <button class="dbt-btn dbt-del"  onclick="Goals.del('${g.id}')">Del</button>
         </div>
@@ -52,26 +55,42 @@ export function renderGoals() {
   }).join('');
 }
 
-export async function depositGoal(id) {
+export function depositGoal(id) {
   const g = state.goals.find(x => x.id === id);
-  if (!g) return;
-  const input = prompt(
-    `Add savings to "${g.name}"\nCurrent: ${fmtCurrency(g.saved)} of ${fmtCurrency(g.target)}\n\nAmount (LKR):`
-  );
-  if (!input) return;
-  const n = Number(input);
-  if (isNaN(n) || n <= 0) { toast('Invalid amount'); return; }
-  g.saved = Math.min(g.target, g.saved + n);
-  const { error } = await updateGoalSaved(id, g.saved);
-  if (error) { toast('Save failed'); return; }
-  renderGoals();
-  toast(`+${fmtCurrency(n)} added ✓`);
+  if (!g) return Promise.resolve();
+
+  return new Promise(resolve => {
+    quickInput({
+      title: 'Add Savings',
+      sub:   `"${g.name}" — ${fmtCurrency(g.saved)} of ${fmtCurrency(g.target)} saved`,
+      label: 'Amount to add (LKR)',
+      onConfirm: async n => {
+        g.saved = Math.min(g.target, g.saved + n);
+        const { error } = await updateGoalSaved(id, g.saved);
+        if (error) { toast('Save failed', 'error'); resolve(); return; }
+        toast(`+${fmtCurrency(n)} added ✓`, 'success');
+        window.App?.render?.();
+        resolve();
+      },
+    });
+  });
 }
 
-export async function deleteGoal(id) {
-  if (!confirm('Delete this goal?')) return;
-  state.goals = state.goals.filter(g => g.id !== id);
-  await dbDeleteGoal(id);
-  renderGoals();
-  toast('Removed');
+export function deleteGoal(id) {
+  const g = state.goals.find(x => x.id === id);
+  return new Promise(resolve => {
+    showConfirm({
+      title:     'Delete Goal',
+      msg:       g ? `Delete "${g.name}"? Your saved progress will be lost.` : 'Delete this goal?',
+      label:     'Delete',
+      onConfirm: async () => {
+        state.goals = state.goals.filter(x => x.id !== id);
+        const { error } = await dbDeleteGoal(id);
+        if (error) toast('Delete failed', 'error');
+        else toast('Goal removed', 'success');
+        window.App?.render?.();
+        resolve();
+      },
+    });
+  });
 }

@@ -2,18 +2,23 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Centa — Every cent. In control.</title>
 <meta name="description" content="Centa: Every cent. In control. — Track income, expenses, debts and goals with cloud-backed security.">
 
 <!-- PWA & Security -->
 <link rel="manifest" href="/manifest.json">
-<meta name="theme-color" content="#111110">
+<meta name="theme-color" content="#0B0B0D">
 <link rel="apple-touch-icon" href="/assets/icon.svg">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://lekqsmqrygqnssblwofx.supabase.co https://*.supabase.co wss://*.supabase.co; img-src 'self' data: https:; object-src 'none';">
+<link rel="apple-touch-icon" sizes="192x192" href="/assets/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="/assets/icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https: data:; connect-src 'self' https://lekqsmqrygqnssblwofx.supabase.co https://*.supabase.co wss://*.supabase.co https://cdnjs.cloudflare.com https://cdn.jsdelivr.net; img-src 'self' data: https:; object-src 'none';">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="config.js"></script>
@@ -22,9 +27,14 @@
 <body>
 
 <!-- ═══════════════════ LOADING SCREEN ══════════════════════════ -->
-<div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px">
-  <div style="font-size:22px;font-weight:600;color:var(--text)">Centa</div>
-  <div style="font-size:13px;color:var(--text3)">Loading…</div>
+<div id="loadingScreen" style="position:fixed;inset:0;background:var(--bg);z-index:3000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:20px;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);">
+  <div style="position:relative; width:60px; height:60px; display:flex; align-items:center; justify-content:center;">
+    <div style="position:absolute; inset:0; border:3px solid var(--surface2); border-radius:50%;"></div>
+    <div style="position:absolute; inset:0; border:3px solid transparent; border-top-color:var(--gold); border-radius:50%; animation:spin 1s linear infinite;"></div>
+    <div style="font-size:16px; font-weight:700; color:var(--text); letter-spacing:-0.5px;">C</div>
+  </div>
+  <div style="font-size:13px; color:var(--text3); font-weight:500; letter-spacing:0.5px; text-transform:uppercase;">Loading Centa</div>
+  <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
 <!-- ═══════════════════ AUTH PAGE ════════════════════════════════ -->
@@ -95,7 +105,12 @@
     <div class="kpi"><div class="kpi-val red"   id="k-owe">—</div><div class="kpi-lbl">I Owe</div><div class="kpi-hint" id="k-owe-h">—</div></div>
     <div class="kpi"><div class="kpi-val green" id="k-owed">—</div><div class="kpi-lbl">Owed To Me</div><div class="kpi-hint" id="k-owed-h">—</div></div>
   </div>
+
+  <!-- Smart Alerts -->
+  <div class="smart-alerts-strip" id="smartAlerts"></div>
+
   <div class="week-goal-bar" id="weekGoalBar"></div>
+
   <div class="g2">
     <div>
       <div class="sh">
@@ -103,6 +118,8 @@
         <button class="add-btn" onclick="Modals.openTx()">+ Add</button>
       </div>
       <div id="todayList"></div>
+      <!-- Mini summary below today's list -->
+      <div id="miniSummary" style="margin-top:12px"></div>
     </div>
     <div class="card">
       <div class="card-title" style="margin-bottom:10px">This Month</div>
@@ -261,6 +278,32 @@
   </div>
 </div>
 
+<!-- More Nav Bottom Sheet -->
+<div class="overlay sheet-overlay" id="moreNavSheet">
+  <div class="bottom-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-title">More Areas</div>
+    <div class="sheet-grid">
+      <button class="sheet-item" data-tab="budget" onclick="App.showTab('budget',this); document.getElementById('moreNavSheet').classList.remove('open')">
+        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="18" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="2" y="13" width="4" height="8" rx="1"/></svg>
+        <span>Budget</span>
+      </button>
+      <button class="sheet-item" data-tab="debts" onclick="App.showTab('debts',this); document.getElementById('moreNavSheet').classList.remove('open')">
+        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
+        <span>Debts</span>
+      </button>
+      <button class="sheet-item" data-tab="goals" onclick="App.showTab('goals',this); document.getElementById('moreNavSheet').classList.remove('open')">
+        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
+        <span>Goals</span>
+      </button>
+      <button class="sheet-item" data-tab="charts" onclick="App.showTab('charts',this); document.getElementById('moreNavSheet').classList.remove('open')">
+        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+        <span>Charts</span>
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Onboarding Modal (Force user setup) -->
 <div class="overlay" id="onboardingOverlay">
   <div class="modal" style="position:relative;text-align:center;">
@@ -278,6 +321,13 @@
         <input id="ob-savrate" type="number" min="0" max="100" value="20">
         <div style="font-size:11px;color:var(--text3);margin-top:4px;">Industry standard is 20%. Adjust as needed.</div>
       </div>
+      <div class="field full" style="margin-top:8px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input id="ob-invest" type="checkbox" checked style="width:16px; height:16px;">
+          Show me personalised investment suggestions
+        </label>
+        <div style="font-size:11px;color:var(--text3);margin-top:4px;margin-left:24px;">Unlock 12-month projections tailored to your financial capability safely.</div>
+      </div>
     </div>
     
     <div class="modal-footer" style="margin-top:20px;justify-content:center;">
@@ -292,7 +342,7 @@
     <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
     </svg>
-    <span class="bnav-label">Today</span>
+    <span class="bnav-label">Home</span>
   </button>
   <button class="bnav-item" data-tab="log" onclick="App.showTab('log',this)">
     <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -301,37 +351,53 @@
     </svg>
     <span class="bnav-label">Log</span>
   </button>
-  <button class="bnav-item" data-tab="budget" onclick="App.showTab('budget',this)">
-    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <rect x="18" y="3" width="4" height="18" rx="1"/><rect x="10" y="8" width="4" height="13" rx="1"/><rect x="2" y="13" width="4" height="8" rx="1"/>
-    </svg>
-    <span class="bnav-label">Budget</span>
-  </button>
-  <button class="bnav-item" data-tab="debts" onclick="App.showTab('debts',this)">
-    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>
-    </svg>
-    <span class="bnav-label">Debts</span>
-  </button>
-  <button class="bnav-item" data-tab="goals" onclick="App.showTab('goals',this)">
-    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/>
-    </svg>
-    <span class="bnav-label">Goals</span>
-  </button>
+  
+  <div class="bnav-fab-wrap">
+    <button class="bnav-fab" onclick="Modals.openTx()" aria-label="Add transaction">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
+  </div>
+
   <button class="bnav-item" data-tab="plan" onclick="App.showTab('plan',this)">
     <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
       <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
     </svg>
     <span class="bnav-label">Plan</span>
   </button>
-  <button class="bnav-item" data-tab="charts" onclick="App.showTab('charts',this)">
-    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>
-    </svg>
-    <span class="bnav-label">Charts</span>
+  <button class="bnav-item bnav-more" onclick="document.getElementById('moreNavSheet').classList.add('open')">
+    <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
+    <span class="bnav-label">More</span>
   </button>
 </nav>
+
+<!-- ═══════════════════ QUICK INPUT (replaces prompt) ════════════════ -->
+<div class="overlay" id="quickInputOverlay">
+  <div class="modal" style="position:relative;max-width:360px">
+    <button class="modal-x" id="qiClose">✕</button>
+    <div class="modal-title" id="qiTitle">Enter Amount</div>
+    <div class="modal-sub" id="qiSub" style="margin-bottom:16px"></div>
+    <div class="field">
+      <label id="qiLabel">Amount (LKR)</label>
+      <input id="qiInput" type="number" min="0" placeholder="0" style="font-size:20px;padding:14px;text-align:center">
+    </div>
+    <div class="modal-footer" style="margin-top:16px">
+      <button class="btn-cancel" id="qiClose2" onclick="document.getElementById('quickInputOverlay').classList.remove('open')">Cancel</button>
+      <button class="btn-save neutral" id="qiConfirm">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ CONFIRM DIALOG (replaces confirm) ════════════ -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal" style="position:relative;max-width:340px;text-align:center">
+    <div class="modal-title" id="confirmTitle" style="margin-bottom:8px">Are you sure?</div>
+    <div class="modal-sub" id="confirmMsg" style="margin-bottom:24px"></div>
+    <div style="display:flex;gap:8px;justify-content:center">
+      <button class="btn-cancel" id="confirmCancel">Cancel</button>
+      <button class="btn-save" id="confirmOk" style="background:var(--red);color:#000">Confirm</button>
+    </div>
+  </div>
+</div>
 
 </div><!-- END #mainApp -->
 

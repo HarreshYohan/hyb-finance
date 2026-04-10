@@ -5,6 +5,7 @@ import { initApp, handleAuth, signOut } from './auth.js';
 import { state, allMonths, getViewMonth, isOwner } from './state.js';
 import { monthLabel, fmtDate, fmtCurrency, todayStr } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
+import { updateCache } from './cache.js';
 import { renderKPIs, renderWeekGoalBar } from './ui/kpi.js';
 import { renderToday }  from './ui/today.js';
 import { renderBudget, saveLimit } from './ui/budget.js';
@@ -36,6 +37,21 @@ export function render() {
   _checkReminder();
   _applyOwnerMode();
   checkOnboarding();
+
+  // Re-render active dynamic tabs so background sync / cache updates reflect immediately
+  if (document.getElementById('tab-log')?.classList.contains('active')) {
+    _populateLogFilters();
+    _renderLog();
+  }
+  if (document.getElementById('tab-charts')?.classList.contains('active')) {
+    buildCharts();
+  }
+  if (document.getElementById('tab-plan')?.classList.contains('active')) {
+    renderPlan();
+  }
+
+  // Save the current state to the local cache so refreshing the page instantly loads mutations
+  updateCache(state);
 }
 
 function _updateHeader() {
@@ -178,10 +194,12 @@ window.Modals = {
 
 window.Budget = { saveLimit };
 
+// Debts & Goals already call window.App.render() internally after each action,
+// but we keep these bridges for any external callers.
 window.Debts = {
-  settle:  id => settleDebt(id).then(() => { renderDebts(); renderKPIs(); }),
-  partial: id => partialPay(id).then(() => { renderDebts(); renderKPIs(); }),
-  del:     id => deleteDebt(id).then(() => { renderDebts(); renderKPIs(); }),
+  settle:  id => settleDebt(id),
+  partial: id => partialPay(id),
+  del:     id => deleteDebt(id),
 };
 
 window.Goals = {

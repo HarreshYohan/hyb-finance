@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS profiles (
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS onboarding_completed BOOLEAN DEFAULT false;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS estimated_income NUMERIC(14,2) DEFAULT 0;
 ALTER TABLE profiles ADD COLUMN IF NOT EXISTS target_savings_rate NUMERIC(14,2) DEFAULT 20.00;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS investment_enabled BOOLEAN DEFAULT true;
 
 -- Auto-create profile on signup
 CREATE OR REPLACE FUNCTION public.handle_new_user()
