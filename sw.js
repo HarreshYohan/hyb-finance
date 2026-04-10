@@ -1,4 +1,10 @@
-const CACHE_NAME = 'centa-v2';
+// ── RELEASE CHECKLIST ────────────────────────────────────────────────────────
+// Every time you deploy a new version, bump CACHE_NAME (e.g. centa-v3 → centa-v4).
+// This clears the old cache on all installed devices and forces fresh asset downloads.
+// Users get the update automatically on their next app open — no reinstall needed.
+// ─────────────────────────────────────────────────────────────────────────────
+const CACHE_NAME = 'centa-v3';
+
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
@@ -14,6 +20,7 @@ const ASSETS_TO_CACHE = [
   '/js/utils.js',
   '/js/ui/budget.js',
   '/js/ui/debts.js',
+  '/js/ui/dialogs.js',
   '/js/ui/goals.js',
   '/js/ui/invest.js',
   '/js/ui/kpi.js',
