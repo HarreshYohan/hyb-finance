@@ -88,6 +88,24 @@ CREATE TABLE IF NOT EXISTS debts (
 CREATE INDEX IF NOT EXISTS idx_debts_user ON debts (user_id);
 
 -- ─────────────────────────────────────────────────────────────────
+--  3b. DEBT PAYMENT LOG
+-- ─────────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS debt_payments (
+  id          TEXT PRIMARY KEY,
+  user_id     UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
+  debt_id     TEXT NOT NULL REFERENCES debts ON DELETE CASCADE,
+  amount      NUMERIC(14, 2) NOT NULL CHECK (amount > 0),
+  date        DATE NOT NULL DEFAULT CURRENT_DATE,
+  note        TEXT,
+  created_at  TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_debt_payments_debt ON debt_payments (debt_id);
+CREATE INDEX IF NOT EXISTS idx_debt_payments_user ON debt_payments (user_id);
+
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS fixed_expenses JSONB DEFAULT '[]'::jsonb;
+
+-- ─────────────────────────────────────────────────────────────────
 --  4. GOALS
 -- ─────────────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS goals (

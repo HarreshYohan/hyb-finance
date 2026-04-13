@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls \"/Users/harreshbaptist/Documents/Harresh/HYB Finance/.env\"*)",
+      "Bash(node --input-type=module --eval ':*)",
+      "Bash(node -e ':*)"
+    ]
+  }
+}

@@ -20,11 +20,14 @@ export function closeSettings() {
 }
 
 function _render() {
-  const custom = getCustomCategories();
-  const plan   = getUserPlan();
-  const owner  = isOwner();
-  const email  = state.profile?.email ?? '—';
-  const dname  = state.profile?.display_name ?? '';
+  const custom  = getCustomCategories();
+  const plan    = getUserPlan();
+  const owner   = isOwner();
+  const email   = state.profile?.email ?? '—';
+  const dname   = state.profile?.display_name ?? '';
+  const estInc  = state.profile?.estimated_income ?? 0;
+  const tgtRate = state.profile?.target_savings_rate ?? 20;
+  const fixedEx = state.profile?.fixed_expenses ?? [];
 
   const planLabel = plan === 'lifetime' ? '👑 Lifetime'
                   : plan === 'pro'      ? '⚡ Pro'
@@ -59,6 +62,37 @@ function _render() {
     </div>
 
     <div class="settings-section">
+      <div class="settings-sec-title">Financial Profile</div>
+      <div class="settings-row settings-row-input">
+        <span class="settings-lbl">Estimated Monthly Income (LKR)</span>
+        <div class="settings-inline">
+          <input class="settings-txt-input" id="est-income-input" type="number" min="0" value="${estInc}" placeholder="e.g. 150000">
+          <button class="settings-action-btn" onclick="Settings.saveFinancialProfile()">Save</button>
+        </div>
+      </div>
+      <div class="settings-row settings-row-input" style="margin-top:6px">
+        <span class="settings-lbl">Target Savings Rate (%)</span>
+        <div class="settings-inline">
+          <input class="settings-txt-input" id="tgt-rate-input" type="number" min="0" max="100" value="${tgtRate}" placeholder="20">
+          <button class="settings-action-btn" onclick="Settings.saveFinancialProfile()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-sec-title">Fixed Monthly Expenses</div>
+      <div style="font-size:12px;color:var(--text3);margin-bottom:10px;line-height:1.5">
+        Enter your recurring fixed costs (rent, utilities, subscriptions). These help Centa give you accurate budget guidance.
+      </div>
+      <div id="fixed-expenses-list">${_fixedExpenseRows(fixedEx)}</div>
+      <div class="settings-add-row" style="margin-top:10px">
+        <input class="settings-txt-input" id="fe-name" placeholder="Expense name (e.g. Rent)" style="flex:2">
+        <input class="settings-txt-input" id="fe-amount" type="number" min="0" placeholder="Amount" style="flex:1;min-width:90px">
+        <button class="settings-action-btn" onclick="Settings.addFixedExpense()">+ Add</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <div class="settings-sec-title">Custom Income Categories</div>
       <div class="settings-chips" id="chips-income">${_chips('income', custom.income)}</div>
       <div class="settings-add-row">
@@ -82,6 +116,18 @@ function _render() {
       <button class="settings-signout-btn" onclick="App.signOut()">Sign Out</button>
     </div>
   `;
+}
+
+function _fixedExpenseRows(list) {
+  if (!list.length) return `<div style="font-size:12px;color:var(--text3)">No fixed expenses added yet.</div>`;
+  return `<div style="display:flex;flex-direction:column;gap:0">` +
+    list.map((fe, i) => `
+      <div class="fe-row">
+        <span class="fe-name">${_esc(fe.name)}</span>
+        <span class="fe-amt">LKR ${Number(fe.amount).toLocaleString()}</span>
+        <button class="chip-del" onclick="Settings.removeFixedExpense(${i})" style="margin-left:6px">✕</button>
+      </div>`).join('') +
+    `</div>`;
 }
 
 function _chips(type, list) {
@@ -125,6 +171,44 @@ export async function saveName() {
   if (state.profile) state.profile.display_name = name;
   _updateHeaderName(name);
   toast('Name updated ✓');
+}
+
+export async function saveFinancialProfile() {
+  const income  = Number($('est-income-input')?.value) || 0;
+  const rate    = Number($('tgt-rate-input')?.value) || 20;
+  if (rate < 0 || rate > 100) { toast('Savings rate must be 0–100'); return; }
+  const { error } = await updateProfile({ estimated_income: income, target_savings_rate: rate });
+  if (error) { toast('Save failed — try again'); return; }
+  if (state.profile) { state.profile.estimated_income = income; state.profile.target_savings_rate = rate; }
+  toast('Financial profile updated ✓');
+  window.App?.render?.();
+}
+
+export async function addFixedExpense() {
+  const name   = $('fe-name')?.value.trim();
+  const amount = Number($('fe-amount')?.value);
+  if (!name || !amount || amount <= 0) { toast('Enter a name and amount'); return; }
+  const list = [...(state.profile?.fixed_expenses ?? []), { name, amount }];
+  const { error } = await updateProfile({ fixed_expenses: list });
+  if (error) { toast('Save failed — try again'); return; }
+  if (state.profile) state.profile.fixed_expenses = list;
+  if ($('fe-name'))   $('fe-name').value   = '';
+  if ($('fe-amount')) $('fe-amount').value = '';
+  const el = $('fixed-expenses-list');
+  if (el) el.innerHTML = _fixedExpenseRows(list);
+  toast('Fixed expense added ✓');
+  window.App?.render?.();
+}
+
+export async function removeFixedExpense(idx) {
+  const list = (state.profile?.fixed_expenses ?? []).filter((_, i) => i !== idx);
+  const { error } = await updateProfile({ fixed_expenses: list });
+  if (error) { toast('Remove failed — try again'); return; }
+  if (state.profile) state.profile.fixed_expenses = list;
+  const el = $('fixed-expenses-list');
+  if (el) el.innerHTML = _fixedExpenseRows(list);
+  toast('Removed ✓');
+  window.App?.render?.();
 }
 
 function _updateHeaderName(name) {

@@ -103,6 +103,63 @@ function showAuthPage() {
   $('auth-email').value       = '';
   $('auth-pass').value        = '';
   hideAuthError();
+  _startAuthCanvas();
+}
+
+// ── Auth canvas particle mesh ─────────────────────────────────────────────────
+
+let _authRaf = null;
+
+function _startAuthCanvas() {
+  const canvas = $('authCanvas');
+  if (!canvas || _authRaf) return;
+  const ctx = canvas.getContext('2d');
+
+  const resize = () => {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  };
+  resize();
+  window.addEventListener('resize', resize, { passive: true });
+
+  const pts = Array.from({ length: 70 }, () => ({
+    x:  Math.random() * canvas.width,
+    y:  Math.random() * canvas.height,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: (Math.random() - 0.5) * 0.4,
+    r:  Math.random() * 1.5 + 0.5,
+  }));
+
+  const draw = () => {
+    if (!$('authCanvas')) { _authRaf = null; return; }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    for (const p of pts) {
+      p.x += p.vx; p.y += p.vy;
+      if (p.x < 0 || p.x > canvas.width)  p.vx *= -1;
+      if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(252,211,77,.35)';
+      ctx.fill();
+    }
+    for (let i = 0; i < pts.length; i++) {
+      for (let j = i + 1; j < pts.length; j++) {
+        const dx = pts[i].x - pts[j].x;
+        const dy = pts[i].y - pts[j].y;
+        const d  = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          ctx.beginPath();
+          ctx.moveTo(pts[i].x, pts[i].y);
+          ctx.lineTo(pts[j].x, pts[j].y);
+          ctx.strokeStyle = `rgba(252,211,77,${0.12 * (1 - d / 120)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    _authRaf = requestAnimationFrame(draw);
+  };
+  _authRaf = requestAnimationFrame(draw);
 }
 
 function showMainApp() {

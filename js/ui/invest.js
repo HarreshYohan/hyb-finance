@@ -111,11 +111,8 @@ export function renderInvestmentSection(avgNetOptions) {
   }).join('');
 
   return `
-    <div class="plan-section-label" style="margin-top:24px; font-size:15px; display:flex; align-items:center; gap:8px;">
-      <span style="font-size:20px">📈</span> Your Investment Capability
-    </div>
-    <div class="plan-pricing-sub" style="margin-bottom:16px">If you invest ${baseInvestAmount} monthly starting now</div>
-    
+    <div class="plan-section-label" style="margin-top:24px">Investment Opportunities</div>
+
     ${cardsHtml}
 
     <div class="inv-disclaimer">

@@ -3,7 +3,7 @@
 // This clears the old cache on all installed devices and forces fresh asset downloads.
 // Users get the update automatically on their next app open — no reinstall needed.
 // ─────────────────────────────────────────────────────────────────────────────
-const CACHE_NAME = 'centa-v3';
+const CACHE_NAME = 'centa-v4';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -30,9 +30,16 @@ const ASSETS_TO_CACHE = [
   '/js/ui/settings.js',
   '/js/ui/toast.js',
   '/js/ui/today.js',
+  '/js/ui/health.js',
   '/config.js',
   '/manifest.json'
 ];
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

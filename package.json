@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node scripts/build-config.js",
     "dev": "npx serve . -p 3000",
-    "test": "dotenv -e .env.test -- playwright test",
+    "test": "node -e \"require('fs').existsSync('.env.test') || require('fs').copyFileSync('.env.test.example','.env.test')\" && dotenv -e .env.test -- playwright test",
     "test:ui": "dotenv -e .env.test -- playwright test --ui",
     "test:headed": "dotenv -e .env.test -- playwright test --headed",
     "test:report": "playwright show-report",

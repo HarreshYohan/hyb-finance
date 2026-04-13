@@ -5,7 +5,7 @@
  */
 
 import { state, getViewMonth, txByMonth, sumInc, sumExp, allMonths } from './state.js';
-import { monthLabel } from './utils.js';
+import { monthLabel, fmtCurrency } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
 
 const CHART_INSTANCES = {};
@@ -36,6 +36,8 @@ export function buildCharts() {
   _buildDailyChart();
   _buildSavingsRateChart();
   _buildIncomeSourceChart();
+  _buildYearForecastChart();
+  _renderFinancialInsightCards();
 }
 
 function _buildIncomeExpenseChart() {
@@ -188,4 +190,198 @@ function _buildIncomeSourceChart() {
 function _parseYM(ym) {
   const [y, m] = ym.split('-').map(Number);
   return { year: y, month: m };
+}
+
+// ── Year-end Forecast Chart ───────────────────────────────────────────────────
+
+function _buildYearForecastChart() {
+  const canvas = document.getElementById('forecastChart');
+  if (!canvas) return;
+
+  const now  = new Date();
+  const year = now.getFullYear();
+  const curM = now.getMonth() + 1; // 1-based
+
+  // Gather actual monthly net savings for months elapsed this year
+  const actuals = [];
+  for (let m = 1; m <= curM; m++) {
+    const ym  = `${year}-${String(m).padStart(2, '0')}`;
+    const txs = txByMonth(ym);
+    actuals.push(sumInc(txs) - sumExp(txs));
+  }
+
+  const avgNet = actuals.length
+    ? actuals.reduce((s, v) => s + v, 0) / actuals.length
+    : Number(state.profile?.estimated_income || 0) * 0.2;
+
+  // Build labels Jan–Dec
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const labels  = MONTHS;
+
+  // Actual data (only months already passed)
+  const actualData = MONTHS.map((_, i) => {
+    const m = i + 1;
+    return m <= curM ? actuals[i] ?? null : null;
+  });
+
+  // Projection: compound monthly — use optimistic (avgNet * 1.05) and conservative (avgNet * 0.85)
+  let runningOpt  = 0;
+  let runningCons = 0;
+  const projOpt   = MONTHS.map((_, i) => {
+    const m = i + 1;
+    if (m < curM) return null;
+    if (m === curM) { runningOpt = actuals[curM - 1] ?? avgNet; runningCons = runningOpt; return runningOpt; }
+    runningOpt  += avgNet * 1.05;
+    runningCons += avgNet * 0.85;
+    return runningOpt;
+  });
+  let currentCons = 0;
+  const projCons = MONTHS.map((_, i) => {
+    const m = i + 1;
+    if (m < curM) return null;
+    if (m === curM) {
+      currentCons = actuals[curM - 1] ?? avgNet;
+      return currentCons;
+    }
+    currentCons += avgNet * 0.85;
+    return currentCons;
+  });
+
+  // Cumulative actuals
+  let cum = 0;
+  const cumActual = MONTHS.map((_, i) => {
+    const m = i + 1;
+    if (m > curM) return null;
+    cum += actuals[i] ?? 0;
+    return cum;
+  });
+
+  // Cumulative projection (optimistic)
+  let cumProj = cum;
+  const cumProjected = MONTHS.map((_, i) => {
+    const m = i + 1;
+    if (m < curM) return null;
+    if (m === curM) return cum;
+    cumProj += avgNet;
+    return cumProj;
+  });
+
+  destroyChart('forecastChart');
+  CHART_INSTANCES['forecastChart'] = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Actual Net Savings',
+          data: actualData,
+          backgroundColor: actualData.map(v => v === null ? 'transparent' : v >= 0 ? 'rgba(52,211,153,.75)' : 'rgba(248,113,113,.75)'),
+          borderRadius: 4,
+          borderSkipped: false,
+          order: 2,
+        },
+        {
+          label: 'Projected Net',
+          data: cumProjected,
+          type: 'line',
+          borderColor: 'rgba(96,165,250,.8)',
+          backgroundColor: 'rgba(96,165,250,.07)',
+          fill: true,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: 'rgba(96,165,250,.8)',
+          borderWidth: 2,
+          borderDash: [4, 3],
+          order: 1,
+        },
+        {
+          label: 'Cumulative Actual',
+          data: cumActual,
+          type: 'line',
+          borderColor: 'rgba(252,211,77,.9)',
+          backgroundColor: 'transparent',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 3,
+          pointBackgroundColor: 'rgba(252,211,77,.9)',
+          borderWidth: 2,
+          order: 0,
+        },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { labels: { color: MUTED, font: { size: 11 }, boxWidth: 10, padding: 12 } },
+        tooltip: {
+          callbacks: {
+            label: ctx => ctx.raw !== null ? `${ctx.dataset.label}: LKR ${Math.round(ctx.raw).toLocaleString()}` : null,
+          },
+        },
+      },
+      scales: {
+        y: { ...axisDefaults(), ticks: { callback: v => (v >= 0 ? '' : '-') + 'LKR ' + Math.abs(v / 1000).toFixed(0) + 'k', color: MUTED, font: { size: 10 } } },
+        x: { ...axisDefaults(), grid: { display: false } },
+      },
+    },
+  });
+}
+
+// ── Financial Insight Cards ───────────────────────────────────────────────────
+
+function _renderFinancialInsightCards() {
+  const el = document.getElementById('chartInsights');
+  if (!el) return;
+
+  const now   = new Date();
+  const year  = now.getFullYear();
+  const curM  = now.getMonth() + 1;
+  const monthsLeft = 12 - curM;
+
+  const ytdTxs = state.tx.filter(t => t.date.startsWith(String(year)));
+  const ytdInc = sumInc(ytdTxs);
+  const ytdExp = sumExp(ytdTxs);
+  const ytdNet = ytdInc - ytdExp;
+  const ytdRate = ytdInc > 0 ? Math.round((ytdNet / ytdInc) * 100) : 0;
+
+  const estInc    = Number(state.profile?.estimated_income) || 0;
+  const tgtRate   = Number(state.profile?.target_savings_rate) || 20;
+  const avgMonNet = curM > 0 ? ytdNet / curM : 0;
+  const eoyProj   = ytdNet + avgMonNet * monthsLeft;
+  const eoyTarget = estInc * 12 * (tgtRate / 100);
+
+  const cards = [
+    {
+      label: `${year} YTD Income`,
+      value: fmtCurrency(ytdInc),
+      sub: `${curM} months tracked`,
+      color: 'var(--green)',
+    },
+    {
+      label: `${year} YTD Savings`,
+      value: fmtCurrency(ytdNet),
+      sub: `${ytdRate}% savings rate`,
+      color: ytdNet >= 0 ? 'var(--green)' : 'var(--red)',
+    },
+    {
+      label: 'Year-End Projection',
+      value: fmtCurrency(eoyProj),
+      sub: `Based on ${curM}-month average`,
+      color: 'var(--blue)',
+    },
+    {
+      label: 'Savings Gap',
+      value: eoyTarget > 0 ? fmtCurrency(Math.max(0, eoyTarget - eoyProj)) : '—',
+      sub: eoyTarget > 0 ? `to hit ${tgtRate}% target` : 'Set income in settings',
+      color: eoyTarget > 0 && eoyProj < eoyTarget ? 'var(--gold)' : 'var(--green)',
+    },
+  ];
+
+  el.innerHTML = cards.map(c => `
+    <div class="chart-insight-card">
+      <div class="ci-label">${c.label}</div>
+      <div class="ci-value" style="color:${c.color}">${c.value}</div>
+      <div class="ci-sub">${c.sub}</div>
+    </div>`).join('');
 }

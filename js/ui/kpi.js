@@ -85,13 +85,6 @@ function _renderSmartAlerts({ inc, exp, net, sr, txs }) {
     alerts.push({ icon: '💳', text: `${overdue.length} overdue debt${overdue.length > 1 ? 's' : ''} — <strong>${fmtCurrency(overdue.reduce((s, d) => s + d.amount - d.paid, 0))}</strong> past due`, type: 'alert-danger' });
   }
 
-  // 3. Savings rate vs target
-  const tgtRate = Number(state.profile?.target_savings_rate) || 20;
-  if (inc > 0 && sr < tgtRate) {
-    const gap = Math.round(inc * (tgtRate - sr) / 100);
-    alerts.push({ icon: '📊', text: `Savings rate ${sr}% — ${fmtCurrency(gap)} short of ${tgtRate}% target`, type: 'alert-info' });
-  }
-
   // 4. Goals nearing deadline (within 60 days)
   const urgentGoals = state.goals.filter(g => {
     if (!g.deadline || g.saved >= g.target) return false;
@@ -186,17 +179,21 @@ function _trendBadge(cur, prev, inverse = false) {
 }
 
 function _computeWeeklyIncomeTarget() {
-  if (!state.tx.length) return 0;
   const now    = new Date();
   const months = [];
-  for (let m = 1; m <= 3; m++) {
+  // Look at past 3 months AND current month
+  for (let m = 0; m <= 3; m++) {
     const d = new Date(now.getFullYear(), now.getMonth() - m, 1);
     months.push(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
   }
   const withIncome = months.filter(ym => state.tx.some(t => t.date.slice(0, 7) === ym && t.type === 'income'));
-  if (!withIncome.length) return 0;
-  const total = withIncome.reduce((s, ym) => s + sumInc(state.tx.filter(t => t.date.slice(0, 7) === ym)), 0);
-  return Math.round(total / withIncome.length / 4);
+  if (withIncome.length) {
+    const total = withIncome.reduce((s, ym) => s + sumInc(state.tx.filter(t => t.date.slice(0, 7) === ym)), 0);
+    return Math.round(total / withIncome.length / 4);
+  }
+  // Fallback: use profile estimated income divided by 4 weeks
+  const estInc = Number(state.profile?.estimated_income) || 0;
+  return estInc > 0 ? Math.round(estInc / 4) : 0;
 }
 
 function _computeWeeklySavingsTarget(weeklyIncome) {

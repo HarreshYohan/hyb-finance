@@ -9,10 +9,11 @@ import { updateCache } from './cache.js';
 import { renderKPIs, renderWeekGoalBar } from './ui/kpi.js';
 import { renderToday }  from './ui/today.js';
 import { renderBudget, saveLimit } from './ui/budget.js';
-import { renderDebts, settleDebt, partialPay, deleteDebt } from './ui/debts.js';
+import { renderDebts, settleDebt, partialPay, deleteDebt, toggleHistory as toggleDebtHistory } from './ui/debts.js';
 import { renderGoals, depositGoal, deleteGoal } from './ui/goals.js';
 import { buildCharts } from './charts.js';
 import { renderPlan }  from './ui/plan.js';
+import { renderHealth } from './ui/health.js';
 import { toast } from './ui/toast.js';
 import {
   openTxModal, closeTxModal, setTxType, saveTx, deleteTx,
@@ -20,7 +21,7 @@ import {
   openDebtModal, closeDebtModal, setDebtDir, saveDebt,
   openGoalModal, closeGoalModal, saveGoal,
 } from './ui/modals.js';
-import { openSettings, closeSettings, addCat, removeCat, saveName } from './ui/settings.js';
+import { openSettings, closeSettings, addCat, removeCat, saveName, saveFinancialProfile, addFixedExpense, removeFixedExpense } from './ui/settings.js';
 import { checkOnboarding, submitOnboarding } from './ui/onboarding.js';
 
 initApp(render);
@@ -164,6 +165,7 @@ window.App = {
     document.querySelectorAll(`[data-tab="${id}"]`).forEach(t => t.classList.add('active'));
     if (id === 'charts') buildCharts();
     if (id === 'plan')   renderPlan();
+    if (id === 'health') renderHealth();
     if (id === 'log') { _populateLogFilters(); _renderLog(); }
   },
   renderLog: _renderLog,
@@ -197,9 +199,10 @@ window.Budget = { saveLimit };
 // Debts & Goals already call window.App.render() internally after each action,
 // but we keep these bridges for any external callers.
 window.Debts = {
-  settle:  id => settleDebt(id),
-  partial: id => partialPay(id),
-  del:     id => deleteDebt(id),
+  settle:        id => settleDebt(id),
+  partial:       id => partialPay(id),
+  del:           id => deleteDebt(id),
+  toggleHistory: id => toggleDebtHistory(id),
 };
 
 window.Goals = {
@@ -210,11 +213,14 @@ window.Goals = {
 window.Auth = { handleAuth };
 
 window.Settings = {
-  open:       openSettings,
-  close:      closeSettings,
+  open:                openSettings,
+  close:               closeSettings,
   addCat,
   removeCat,
   saveName,
+  saveFinancialProfile,
+  addFixedExpense,
+  removeFixedExpense,
 };
 
 window.Onboarding = {

@@ -5,7 +5,7 @@
  * Runs on Vercel/Netlify via the `build` npm script.
  * Never commits real credentials — they live in the platform's env vars.
  */
-const fs = require('fs');
+import fs from 'fs';
 
 const required = ['SUPABASE_URL', 'SUPABASE_ANON_KEY'];
 const missing  = required.filter(k => !process.env[k]);

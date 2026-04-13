@@ -39,14 +39,27 @@
 
 <!-- ═══════════════════ AUTH PAGE ════════════════════════════════ -->
 <div id="authPage" class="auth-page" style="display:none">
-  <div class="auth-box">
+  <canvas id="authCanvas" class="auth-canvas" aria-hidden="true"></canvas>
+  <div class="auth-card">
+    <div class="auth-brand">
+      <div class="auth-brand-ring"></div>
+      <div class="auth-brand-letter">C</div>
+    </div>
     <div class="auth-logo">Centa</div>
     <div class="auth-tagline">Every cent. In control.</div>
-    <div class="auth-sub">Sign in or create an account to manage your finances.</div>
     <div id="auth-error" class="auth-error" style="display:none"></div>
-    <input type="email"    id="auth-email" class="auth-input" placeholder="Email Address"  autocomplete="email">
-    <input type="password" id="auth-pass"  class="auth-input" placeholder="Password"       autocomplete="current-password">
-    <button class="auth-btn" id="auth-submit-btn" onclick="Auth.handleAuth()">Sign In / Sign Up</button>
+    <div class="auth-field-wrap">
+      <label class="auth-label">Email</label>
+      <input type="email"    id="auth-email" class="auth-input" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="auth-field-wrap">
+      <label class="auth-label">Password</label>
+      <input type="password" id="auth-pass"  class="auth-input" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="auth-btn" id="auth-submit-btn" onclick="Auth.handleAuth()">
+      <span id="auth-btn-text">Sign In / Sign Up</span>
+    </button>
+    <div class="auth-footer">Secure · Private · Cloud-backed</div>
   </div>
 </div>
 
@@ -94,6 +107,7 @@
   <button class="tab"        data-tab="goals"  onclick="App.showTab('goals',this)">Goals</button>
   <button class="tab"        data-tab="plan"   onclick="App.showTab('plan',this)">My Plan</button>
   <button class="tab"        data-tab="charts" onclick="App.showTab('charts',this)">Charts</button>
+  <button class="tab"        data-tab="health" onclick="App.showTab('health',this)">Health</button>
 </div>
 
 <!-- TODAY -->
@@ -177,8 +191,18 @@
 <!-- MY PLAN -->
 <div class="panel" id="tab-plan"></div>
 
+<!-- FINANCIAL HEALTH -->
+<div class="panel" id="tab-health"></div>
+
 <!-- CHARTS -->
 <div class="panel" id="tab-charts">
+  <!-- Year-end forecast + insight cards -->
+  <div id="chartInsights" class="chart-insights-row"></div>
+  <div class="card" style="margin-bottom:12px">
+    <div class="card-title">Year-End Forecast</div>
+    <div class="card-sub" style="margin-bottom:12px">Actual savings vs projected trajectory through December</div>
+    <div style="position:relative;height:220px"><canvas id="forecastChart"></canvas></div>
+  </div>
   <div class="g2">
     <div class="card"><div class="card-title">Income vs Expenses</div><div class="card-sub" style="margin-bottom:12px">Monthly comparison</div><div style="position:relative;height:200px"><canvas id="ieChart"></canvas></div></div>
     <div class="card"><div class="card-title">Expense Categories</div><div class="card-sub" style="margin-bottom:12px">This month</div><div style="position:relative;height:200px"><canvas id="catChart"></canvas></div></div>
@@ -300,6 +324,10 @@
         <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
         <span>Charts</span>
       </button>
+      <button class="sheet-item" data-tab="health" onclick="App.showTab('health',this); document.getElementById('moreNavSheet').classList.remove('open')">
+        <svg class="bnav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        <span>Health</span>
+      </button>
     </div>
   </div>
 </div>
@@ -406,9 +434,69 @@
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
-        .then(reg => console.log('ServiceWorker registered:', reg.scope))
+        .then(reg => {
+          console.log('ServiceWorker registered:', reg.scope);
+
+          // Detect new service worker waiting (new version deployed)
+          const checkWaiting = (reg) => {
+            if (reg.waiting) {
+              _showUpdateBanner();
+            }
+          };
+          checkWaiting(reg);
+          reg.addEventListener('updatefound', () => {
+            const newWorker = reg.installing;
+            if (newWorker) {
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  _showUpdateBanner();
+                }
+              });
+            }
+          });
+        })
         .catch(err => console.error('ServiceWorker registration failed:', err));
     });
+
+    // When a new SW takes control, reload to pick up fresh assets
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      window.location.reload();
+    });
+  }
+
+  function _showUpdateBanner() {
+    const existing = document.getElementById('swUpdateBanner');
+    if (existing) return;
+    const banner = document.createElement('div');
+    banner.id = 'swUpdateBanner';
+    banner.innerHTML = `
+      <span>New version available</span>
+      <button id="swUpdateBtn">Update now</button>
+      <button id="swUpdateDismiss">✕</button>
+    `;
+    banner.style.cssText = `
+      position:fixed;bottom:80px;left:50%;transform:translateX(-50%);
+      background:#1E293B;border:1px solid rgba(252,211,77,.3);color:#F3F4F6;
+      padding:10px 16px;border-radius:10px;font-size:13px;z-index:9999;
+      display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.6);
+      white-space:nowrap;animation:fadeUp .3s ease;
+    `;
+    document.body.appendChild(banner);
+
+    document.getElementById('swUpdateBtn').addEventListener('click', () => {
+      navigator.serviceWorker.getRegistration().then(reg => {
+        if (reg?.waiting) {
+          reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+        }
+      });
+      banner.remove();
+    });
+    document.getElementById('swUpdateDismiss').addEventListener('click', () => banner.remove());
+
+    // Style the buttons inline
+    const [updateBtn, dismissBtn] = [document.getElementById('swUpdateBtn'), document.getElementById('swUpdateDismiss')];
+    updateBtn.style.cssText = 'background:linear-gradient(135deg,#FCD34D,#F59E0B);color:#0B0B0D;border:none;padding:6px 14px;border-radius:7px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif';
+    dismissBtn.style.cssText = 'background:none;border:none;color:rgba(255,255,255,.4);cursor:pointer;font-size:14px;padding:0 2px';
   }
 </script>
 </body>
