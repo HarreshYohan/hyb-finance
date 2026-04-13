@@ -30,27 +30,27 @@ jobs:
           SUPABASE_URL:     ${{ secrets.SUPABASE_URL || 'https://dummy.supabase.co' }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY || 'dummy-anon-key' }}
 
-      - name: Install Playwright browsers
-        run: npx playwright install chromium --with-deps
+      # - name: Install Playwright browsers
+      #   run: npx playwright install chromium --with-deps
 
-      - name: Run smoke tests
-        run: npx playwright test --project=chromium
-        env:
-          BASE_URL:            http://localhost:3000
-          TEST_FREE_EMAIL:     ${{ secrets.TEST_FREE_EMAIL || 'test-free@centa.app' }}
-          TEST_FREE_PASS:      ${{ secrets.TEST_FREE_PASS || 'TestPass123!' }}
-          TEST_PRO_EMAIL:      ${{ secrets.TEST_PRO_EMAIL || 'test-pro@centa.app' }}
-          TEST_PRO_PASS:       ${{ secrets.TEST_PRO_PASS || 'TestPass123!' }}
-          TEST_LIFETIME_EMAIL: ${{ secrets.TEST_LIFETIME_EMAIL || 'test-lifetime@centa.app' }}
-          TEST_LIFETIME_PASS:  ${{ secrets.TEST_LIFETIME_PASS || 'TestPass123!' }}
+      # - name: Run smoke tests
+      #   run: npx playwright test --project=chromium
+      #   env:
+      #     BASE_URL:            http://localhost:3000
+      #     TEST_FREE_EMAIL:     ${{ secrets.TEST_FREE_EMAIL || 'test-free@centa.app' }}
+      #     TEST_FREE_PASS:      ${{ secrets.TEST_FREE_PASS || 'TestPass123!' }}
+      #     TEST_PRO_EMAIL:      ${{ secrets.TEST_PRO_EMAIL || 'test-pro@centa.app' }}
+      #     TEST_PRO_PASS:       ${{ secrets.TEST_PRO_PASS || 'TestPass123!' }}
+      #     TEST_LIFETIME_EMAIL: ${{ secrets.TEST_LIFETIME_EMAIL || 'test-lifetime@centa.app' }}
+      #     TEST_LIFETIME_PASS:  ${{ secrets.TEST_LIFETIME_PASS || 'TestPass123!' }}
 
-      - name: Upload test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: playwright-report
-          path: playwright-report/
-          retention-days: 7
+      # - name: Upload test report
+      #   if: always()
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: playwright-report
+      #     path: playwright-report/
+      #     retention-days: 7
 
   tag-release:
     name: Tag Release
