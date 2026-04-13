@@ -91,6 +91,19 @@ export async function handleAuth() {
   // onAuthStateChange will fire and handle the rest
 }
 
+export async function handleGoogleAuth() {
+  const btn = $('auth-submit-btn');
+  btn.disabled = true;
+  const { data, error } = await db.auth.signInWithOAuth({
+    provider: 'google',
+    options: { redirectTo: window.location.origin }
+  });
+  if (error) {
+    btn.disabled = false;
+    showAuthError(error.message);
+  }
+}
+
 export async function signOut() {
   await db.auth.signOut();
 }

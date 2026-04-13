@@ -3,7 +3,7 @@
 // This clears the old cache on all installed devices and forces fresh asset downloads.
 // Users get the update automatically on their next app open — no reinstall needed.
 // ─────────────────────────────────────────────────────────────────────────────
-const CACHE_NAME = 'centa-v4';
+const CACHE_NAME = 'centa-v5';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -22,7 +22,6 @@ const ASSETS_TO_CACHE = [
   '/js/ui/debts.js',
   '/js/ui/dialogs.js',
   '/js/ui/goals.js',
-  '/js/ui/invest.js',
   '/js/ui/kpi.js',
   '/js/ui/modals.js',
   '/js/ui/onboarding.js',

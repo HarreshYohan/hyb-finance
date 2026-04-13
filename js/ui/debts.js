@@ -68,8 +68,8 @@ export function renderDebts() {
         <div class="debt-due${overdue ? ' overdue' : ''}">
           ${d.due ? (overdue ? '⚠ Overdue — ' : 'Due ') + fmtDate(d.due) : 'No due date'}
         </div>
-        <div class="prog-wrap" style="margin:8px 0">
-          <div class="prog-bar" style="width:${pctPaid}%;background:${col}"></div>
+        <div class="debt-prog-track">
+          <div class="debt-prog-fill ${d.dir}" style="width:${pctPaid}%"></div>
         </div>
         <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:10px">
           <span>Paid: ${fmtCurrency(d.paid)}</span>

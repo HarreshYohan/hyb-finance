@@ -1,7 +1,7 @@
 /**
  * js/app.js — Main orchestrator
  */
-import { initApp, handleAuth, signOut } from './auth.js';
+import { initApp, handleAuth, handleGoogleAuth, signOut } from './auth.js';
 import { state, allMonths, getViewMonth, isOwner } from './state.js';
 import { monthLabel, fmtDate, fmtCurrency, todayStr } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
@@ -210,7 +210,7 @@ window.Goals = {
   del:     id => deleteGoal(id),
 };
 
-window.Auth = { handleAuth };
+window.Auth = { handleAuth, handleGoogleAuth };
 
 window.Settings = {
   open:                openSettings,
