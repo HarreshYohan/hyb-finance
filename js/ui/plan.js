@@ -164,7 +164,7 @@ function _spendingBreakdown(txs) {
   const sorted = Object.entries(bycat).sort(([, a], [, b]) => b - a).slice(0, 8);
 
   return `
-<div class="plan-section-label" style="margin-top:8px">Spending Breakdown</div>
+<div class="plan-section-label" style="margin-top:28px">Spending Breakdown</div>
 <div class="card plan-breakdown-card">
   ${sorted.map(([cat, amt]) => {
     const pct   = Math.round((amt / total) * 100);
@@ -198,7 +198,7 @@ function _savingsProjection(monthlySavings) {
   const fv = n => monthlySavings * ((Math.pow(1 + r, n) - 1) / r);
 
   return `
-<div class="plan-section-label" style="margin-top:8px">Savings Projection</div>
+<div class="plan-section-label" style="margin-top:28px">Savings Projection</div>
 <div class="card plan-proj-card">
   <div class="plan-proj-note">At <strong>${fmtCurrency(monthlySavings)}/month</strong> with 7% annual growth (conservative estimate)</div>
   <div class="plan-proj-grid">
@@ -218,7 +218,7 @@ function _debtTimeline() {
   if (!active.length) return '';
 
   return `
-<div class="plan-section-label" style="margin-top:8px">Debt Payoff Timeline</div>
+<div class="plan-section-label" style="margin-top:28px">Debt Payoff Timeline</div>
 <div class="card">
   ${active.map(d => {
     const remaining = Number(d.amount) - Number(d.paid);
@@ -252,7 +252,7 @@ function _goalForecasts(avgNet) {
   if (!state.goals.length) return '';
 
   return `
-<div class="plan-section-label" style="margin-top:8px">Goal Forecasts</div>
+<div class="plan-section-label" style="margin-top:28px">Goal Forecasts</div>
 <div class="plan-goals-grid">
   ${state.goals.map(g => {
     const remaining = Number(g.target) - Number(g.saved);
@@ -296,20 +296,20 @@ function _buildTargetPlan(estInc, tgtRate) {
   const wantsAmt = estInc - saveAmt - needsAmt; // Remainder for wants
 
   return `
-<div class="plan-section-label" style="margin-top:8px">Your Wealth Architecture</div>
+<div class="plan-section-label" style="margin-top:28px">Your Wealth Architecture</div>
 <div class="plan-pricing-sub">Based on your estimated income of ${fmtCurrency(estInc)}</div>
-<div class="card" style="display:flex;flex-direction:column;gap:12px">
-  <div class="plan-cat-row">
-    <div class="plan-cat-name"><span class="plan-cat-dot" style="background:var(--red)"></span><span>Core Needs (50%)</span></div>
-    <div class="plan-cat-nums"><span>${fmtCurrency(needsAmt)}</span></div>
+<div class="card">
+  <div class="plan-alloc-row">
+    <div class="plan-alloc-left"><span class="plan-cat-dot" style="background:var(--red)"></span><span>Core Needs (50%)</span></div>
+    <span class="plan-alloc-val">${fmtCurrency(needsAmt)}</span>
   </div>
-  <div class="plan-cat-row">
-    <div class="plan-cat-name"><span class="plan-cat-dot" style="background:var(--blue)"></span><span>Wants & Discretionary (~${Math.round((wantsAmt/estInc)*100)}%)</span></div>
-    <div class="plan-cat-nums"><span>${fmtCurrency(wantsAmt)}</span></div>
+  <div class="plan-alloc-row">
+    <div class="plan-alloc-left"><span class="plan-cat-dot" style="background:var(--blue)"></span><span>Wants & Discretionary (~${Math.round((wantsAmt/estInc)*100)}%)</span></div>
+    <span class="plan-alloc-val">${fmtCurrency(wantsAmt)}</span>
   </div>
-  <div class="plan-cat-row">
-    <div class="plan-cat-name"><span class="plan-cat-dot" style="background:var(--green)"></span><span>Target Savings (${tgtRate}%)</span></div>
-    <div class="plan-cat-nums"><span class="green" style="font-weight:600">${fmtCurrency(saveAmt)}</span></div>
+  <div class="plan-alloc-row">
+    <div class="plan-alloc-left"><span class="plan-cat-dot" style="background:var(--green)"></span><span>Target Savings (${tgtRate}%)</span></div>
+    <span class="plan-alloc-val green" style="font-weight:600">${fmtCurrency(saveAmt)}</span>
   </div>
 </div>`;
 }
@@ -442,7 +442,7 @@ ${owner ? `
   </div>
 </div>
 
-<div class="plan-section-label" style="margin-top:4px">AI Insights</div>
+<div class="plan-section-label" style="margin-top:20px">AI Insights</div>
 <div class="plan-insights-grid">
   ${insights.map((ins, i) => `
   <div class="plan-insight-card" style="animation-delay:${i * 60}ms">
@@ -463,7 +463,7 @@ ${_goalForecasts(avgNet)}
 
 ${(state.profile?.investment_enabled !== false) ? renderInvestmentSection({ avgNet, estInc, tgtRate }) : ''}
 
-<div class="plan-section-label" style="margin-top:8px">Choose Your Plan</div>
+<div class="plan-section-label" style="margin-top:28px">Choose Your Plan</div>
 <div class="plan-pricing-sub">Unlock everything Centa has to offer</div>
 <div class="plan-tiers-grid">${_tiersHTML()}</div>
 

@@ -6,6 +6,15 @@
 import { state, txByDate, txByMonth, sumInc, sumExp, getViewMonth } from '../state.js';
 import { todayStr, fmtDate, fmtCurrency } from '../utils.js';
 
+/** Compact signed amount for calendar cells — no currency prefix, just number+suffix */
+function _fmtCalAmt(n) {
+  const a   = Math.abs(n);
+  const sig = n >= 0 ? '+' : '-';
+  if (a >= 1_000_000) return `${sig}${(a / 1_000_000).toFixed(1)}M`;
+  if (a >= 1_000)     return `${sig}${(a / 1_000).toFixed(0)}k`;
+  return `${sig}${Math.round(a)}`;
+}
+
 export function renderToday() {
   const today = todayStr();
   document.getElementById('todaySubLabel').textContent = fmtDate(today);
@@ -155,8 +164,12 @@ function _renderCalendar() {
       ? `${fmtDate(ds)} · ${txs.length} tx · ${totalDay >= 0 ? '+' : ''}${fmtCurrency(totalDay)}`
       : '';
 
+    const valHtml = txs.length && !future
+      ? `<span class="cal-val">${_fmtCalAmt(totalDay)}</span>`
+      : '';
+
     grid.insertAdjacentHTML('beforeend',
-      `<div class="${cls}" title="${title}" onclick="${!future && txs.length ? `App.showTab('log',this)` : ''}">${d}</div>`);
+      `<div class="${cls}" title="${title}" onclick="${!future && txs.length ? `App.showTab('log',this)` : ''}"><span class="cal-day-n">${d}</span>${valHtml}</div>`);
   }
 }
 

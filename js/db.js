@@ -78,7 +78,6 @@ export async function upsertTransaction(entry) {
     date:      entry.date,
     category:  entry.category,
     note:      entry.note ?? null,
-    tags:      entry.tags ?? [],
   });
   return { data, error };
 }
@@ -162,7 +161,6 @@ function mapTx(t) {
     date:     t.date,
     category: t.category,
     note:     t.note,
-    tags:     t.tags ?? [],
     ts:       new Date(t.created_at).getTime(),
   };
 }

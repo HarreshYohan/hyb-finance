@@ -231,4 +231,13 @@ document.addEventListener('click', e => {
   if (!e.target.closest('.field-wrap')) document.getElementById('acList').style.display = 'none';
 });
 
+// Force calendar-only date picking — block manual keyboard entry on all date inputs
+document.addEventListener('keydown', e => {
+  if (e.target.type === 'date') {
+    // Allow: Tab, Shift+Tab, Escape, F-keys (for screen readers & accessibility)
+    const allowed = ['Tab', 'Escape', 'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
+    if (!allowed.includes(e.key)) e.preventDefault();
+  }
+}, true);
+
 setInterval(_checkReminder, 60_000);

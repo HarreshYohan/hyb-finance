@@ -2,9 +2,20 @@
   "name": "centa",
   "version": "1.0.0",
   "description": "Centa — Every cent. In control. Personal finance tracker.",
+  "type": "module",
   "scripts": {
     "build": "node scripts/build-config.js",
-    "dev": "npx serve ."
+    "dev": "npx serve . -p 3000",
+    "test": "dotenv -e .env.test -- playwright test",
+    "test:ui": "dotenv -e .env.test -- playwright test --ui",
+    "test:headed": "dotenv -e .env.test -- playwright test --headed",
+    "test:report": "playwright show-report",
+    "test:seed": "node scripts/create-test-users.js",
+    "test:clean": "rm -rf test-results playwright-report playwright-videos"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "dotenv-cli": "^7.4.2"
   },
   "engines": {
     "node": ">=18"
