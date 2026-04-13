@@ -8,7 +8,6 @@
 import { state, getViewMonth, txByMonth, sumInc, sumExp, allMonths, isOwner, getUserPlan } from '../state.js';
 import { fmtCurrency } from '../utils.js';
 import { CATEGORY_COLOR } from '../constants.js';
-import { renderInvestmentSection } from './invest.js';
 
 let _raf = null;
 let _pts = [];
@@ -99,7 +98,7 @@ function _buildInsights({ inc, exp, net, rate, avgInc, avgExp, avgNet, totalDebt
 
   // Savings rate
   if (rate >= 25) {
-    ins.push({ icon: '🏆', title: 'Outstanding Savings Rate', text: `Saving ${rate.toFixed(1)}% of income — top-tier discipline. Invest your surplus into index funds or fixed deposits to compound wealth passively.`, tag: 'Excellent', type: 'positive' });
+    ins.push({ icon: '🏆', title: 'Outstanding Savings Rate', text: `Saving ${rate.toFixed(1)}% of income — top-tier discipline. You are building wealth rapidly.`, tag: 'Excellent', type: 'positive' });
   } else if (rate >= 15) {
     ins.push({ icon: '💡', title: 'Healthy Savings Momentum', text: `${rate.toFixed(1)}% is solid. Push toward 25% by auditing subscriptions and discretionary spend — the gap compounds dramatically over time.`, tag: 'On Track', type: 'positive' });
   } else if (rate >= 5) {
@@ -124,7 +123,7 @@ function _buildInsights({ inc, exp, net, rate, avgInc, avgExp, avgNet, totalDebt
       ins.push({ icon: '💳', title: `${sev > 2 ? 'Significant' : 'Manageable'} Debt`, text: `${fmtCurrency(totalDebt)} at ${sev.toFixed(1)}× monthly income. Pay 20% above the minimum monthly to significantly reduce total interest paid.`, tag: sev > 2 ? 'Action' : 'Monitor', type: sev > 2 ? 'warning' : 'neutral' });
     }
   } else {
-    ins.push({ icon: '✅', title: 'Zero Outstanding Debt', text: 'Debt-free is a powerful position. Redirect what would have been debt payments into an investment account and watch it compound.', tag: 'Excellent', type: 'positive' });
+    ins.push({ icon: '✅', title: 'Zero Outstanding Debt', text: 'Debt-free is a powerful position. Enjoy the freedom and security of keeping what you earn.', tag: 'Excellent', type: 'positive' });
   }
 
   // Goals
@@ -136,17 +135,13 @@ function _buildInsights({ inc, exp, net, rate, avgInc, avgExp, avgNet, totalDebt
 
   // Trend
   if (avgInc > 0) {
-    ins.push({ icon: '📈', title: '3-Month Trend', text: `Average net ${avgNet >= 0 ? '+' : ''}${fmtCurrency(avgNet)}/month. ${avgNet >= 0 ? 'Consistently building surplus — automate investments now.' : 'Consistent deficit erodes savings fast. Review one recurring cost this week.'}`, tag: '3-Month View', type: avgNet >= 0 ? 'positive' : 'danger' });
+    ins.push({ icon: '📈', title: '3-Month Trend', text: `Average net ${avgNet >= 0 ? '+' : ''}${fmtCurrency(avgNet)}/month. ${avgNet >= 0 ? 'Consistently building surplus.' : 'Consistent deficit erodes savings fast. Review one recurring cost this week.'}`, tag: '3-Month View', type: avgNet >= 0 ? 'positive' : 'danger' });
   }
 
   // Emergency fund
   const mSpend = avgExp || exp;
   if (mSpend > 0) {
-    ins.push({ icon: '🛡️', title: 'Emergency Fund Target', text: `Build ${fmtCurrency(mSpend * 6)} (6 months expenses) in a liquid savings account. This is your financial immune system — complete this before investing aggressively.`, tag: 'Foundation', type: 'neutral' });
-  }
-
-  if (rate >= 20 && totalDebt === 0) {
-    ins.push({ icon: '📊', title: 'Ready to Invest', text: 'Strong savings + no debt — you\'re positioned to invest. A unit trust or index fund compounding at 8% annually turns 10× over 30 years.', tag: 'Next Level', type: 'positive' });
+    ins.push({ icon: '🛡️', title: 'Emergency Fund Target', text: `Build ${fmtCurrency(mSpend * 6)} (6 months expenses) in a liquid savings account. This is your financial immune system.`, tag: 'Foundation', type: 'neutral' });
   }
 
   return ins;
@@ -460,8 +455,6 @@ ${_spendingBreakdown(txs)}
 ${_savingsProjection(Math.max(0, avgNet))}
 ${_debtTimeline()}
 ${_goalForecasts(avgNet)}
-
-${(state.profile?.investment_enabled !== false) ? renderInvestmentSection({ avgNet, estInc, tgtRate }) : ''}
 
 <div class="plan-section-label" style="margin-top:28px">Choose Your Plan</div>
 <div class="plan-pricing-sub">Unlock everything Centa has to offer</div>
