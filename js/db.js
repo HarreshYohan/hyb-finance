@@ -24,16 +24,24 @@ export async function syncAll(renderCallback) {
   }
 
   try {
-    const [txRes, debtsRes, goalsRes, budRes, recRes] = await Promise.all([
+    const [txRes, debtsRes, goalsRes, budRes, recRes, dpRes] = await Promise.all([
       db.from('transactions').select('*').order('date', { ascending: false }),
       db.from('debts').select('*').order('created_at', { ascending: false }),
       db.from('goals').select('*').order('created_at', { ascending: false }),
       db.from('budgets').select('*'),
       db.from('recurring_transactions').select('*').eq('active', true),
+      db.from('debt_payments').select('*').order('date', { ascending: false }),
     ]);
 
     state.tx = (txRes.data ?? []).map(mapTx);
     state.debts = (debtsRes.data ?? []).map(mapDebt);
+    state.debtPayments = (dpRes.data ?? []).map(p => ({
+      id:     p.id,
+      debtId: p.debt_id,
+      amount: Number(p.amount),
+      date:   p.date,
+      note:   p.note,
+    }));
     state.goals = (goalsRes.data ?? []).map(mapGoal);
     state.recurring = (recRes.data ?? []).map(mapRecurring);
 
@@ -78,7 +86,6 @@ export async function upsertTransaction(entry) {
     date:      entry.date,
     category:  entry.category,
     note:      entry.note ?? null,
-    tags:      entry.tags ?? [],
   });
   return { data, error };
 }
@@ -106,6 +113,23 @@ export async function upsertDebt(entry) {
 
 export async function updateDebtPaid(id, paid) {
   return db.from('debts').update({ paid }).eq('id', id);
+}
+
+export async function addDebtPayment(entry) {
+  return db.from('debt_payments').insert({
+    id:      entry.id,
+    user_id: state.profile.id,
+    debt_id: entry.debtId,
+    amount:  entry.amount,
+    date:    entry.date,
+    note:    entry.note ?? null,
+  });
+}
+
+export async function fetchDebtPayments() {
+  return db.from('debt_payments')
+    .select('*')
+    .order('date', { ascending: false });
 }
 
 export async function deleteDebt(id) {
@@ -162,7 +186,6 @@ function mapTx(t) {
     date:     t.date,
     category: t.category,
     note:     t.note,
-    tags:     t.tags ?? [],
     ts:       new Date(t.created_at).getTime(),
   };
 }

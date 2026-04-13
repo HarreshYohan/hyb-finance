@@ -5,9 +5,12 @@
 
 import { state, totalIOwe, totalOwedToMe } from '../state.js';
 import { fmtCurrency, fmtDate, todayStr } from '../utils.js';
-import { updateDebtPaid, deleteDebt as dbDeleteDebt } from '../db.js';
+import { updateDebtPaid, addDebtPayment, deleteDebt as dbDeleteDebt } from '../db.js';
 import { toast } from './toast.js';
 import { quickInput, showConfirm } from './dialogs.js';
+
+/** Ids of debt cards currently showing payment history */
+const _historyOpen = new Set();
 
 export function renderDebts() {
   const owe  = totalIOwe();
@@ -39,6 +42,19 @@ export function renderDebts() {
     const settled = rem <= 0;
     const overdue = d.due && d.due < todayStr() && !settled;
     const col     = d.dir === 'owe' ? 'var(--red)' : 'var(--green)';
+    const payments = state.debtPayments.filter(p => p.debtId === d.id);
+    const histOpen = _historyOpen.has(d.id);
+
+    const historyHtml = histOpen ? `
+      <div class="debt-history">
+        <div class="dh-header">Payment History</div>
+        ${payments.length ? payments.slice(0, 10).map(p => `
+          <div class="dh-row">
+            <span class="dh-date">${fmtDate(p.date)}</span>
+            <span class="dh-note">${p.note ? escHtml(p.note) : '—'}</span>
+            <span class="dh-amt" style="color:${col}">-${fmtCurrency(p.amount)}</span>
+          </div>`).join('') : `<div class="dh-empty">No recorded payments yet.</div>`}
+      </div>` : '';
 
     return `
       <div class="debt-card ${d.dir}${settled ? ' debt-settled' : ''}">
@@ -59,12 +75,14 @@ export function renderDebts() {
           <span>Paid: ${fmtCurrency(d.paid)}</span>
           <span>${pctPaid}% · Total: ${fmtCurrency(d.amount)}</span>
         </div>
+        ${historyHtml}
         <div class="debt-actions">
           ${!settled ? `
-            <button class="dbt-btn dbt-settle" onclick="Debts.settle('${d.id}')">✓ Settle</button>
+            <button class="dbt-btn dbt-settle"  onclick="Debts.settle('${d.id}')">✓ Settle</button>
             <button class="dbt-btn dbt-partial" onclick="Debts.partial('${d.id}')">+ Pay</button>
           ` : ''}
           <button class="dbt-btn dbt-edit" onclick="App.editDebt('${d.id}')">Edit</button>
+          <button class="dbt-btn dbt-history ${histOpen ? 'active' : ''}" onclick="Debts.toggleHistory('${d.id}')">${payments.length > 0 ? `${payments.length} ` : ''}History</button>
           <button class="dbt-btn dbt-del"  onclick="Debts.del('${d.id}')">Remove</button>
         </div>
       </div>`;
@@ -105,15 +123,39 @@ export function partialPay(id) {
       sub:   `"${d.name}" — ${fmtCurrency(rem)} remaining`,
       label: 'Amount paid (LKR)',
       onConfirm: async n => {
+        const today = todayStr();
         d.paid = Math.min(Number(d.amount), Number(d.paid) + n);
         const { error } = await updateDebtPaid(id, d.paid);
         if (error) { toast('Save failed', 'error'); resolve(); return; }
+        // Log payment record
+        const payEntry = {
+          id:     `dp_${Date.now()}_${Math.random().toString(36).slice(2,7)}`,
+          debtId: id,
+          amount: n,
+          date:   today,
+          note:   null,
+        };
+        state.debtPayments = [payEntry, ...state.debtPayments];
+        await addDebtPayment(payEntry);
         toast(`${fmtCurrency(n)} recorded ✓`, 'success');
         window.App?.render?.();
         resolve();
       },
     });
   });
+}
+
+export function toggleHistory(id) {
+  if (_historyOpen.has(id)) {
+    _historyOpen.delete(id);
+  } else {
+    _historyOpen.add(id);
+  }
+  window.App?.render?.();
+}
+
+function escHtml(s) {
+  return String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 export function deleteDebt(id) {

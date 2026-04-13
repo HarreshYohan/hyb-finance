@@ -8,6 +8,7 @@
 export const state = {
   tx:               [],   // Transaction[]
   debts:            [],   // Debt[]
+  debtPayments:     [],   // DebtPayment[]
   goals:            [],   // Goal[]
   budgets:          {},   // { [category: string]: number }
   recurring:        [],   // RecurringTransaction[]
@@ -20,14 +21,15 @@ export const state = {
 
 /** Reset state to blank (e.g. on sign out) */
 export function resetState() {
-  state.tx          = [];
-  state.debts       = [];
-  state.goals       = [];
-  state.budgets     = {};
-  state.recurring   = [];
-  state.profile     = null;
-  state.viewMonth   = '';
-  state.reminderOff = '';
+  state.tx           = [];
+  state.debts        = [];
+  state.debtPayments = [];
+  state.goals        = [];
+  state.budgets      = {};
+  state.recurring    = [];
+  state.profile      = null;
+  state.viewMonth    = '';
+  state.reminderOff  = '';
 }
 
 // ── Computed helpers ─────────────────────────────────────────────────────────

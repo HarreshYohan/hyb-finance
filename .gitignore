@@ -1,5 +1,6 @@
 # Credentials — NEVER commit real keys
 config.js
+.env.test
 
 # macOS
 .DS_Store
@@ -7,3 +8,8 @@ config.js
 # Editors
 .vscode/
 *.swp
+
+node_modules/
+test-results/
+playwright-report/
+playwright-videos/
