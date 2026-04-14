@@ -14,7 +14,7 @@ const $ = id => document.getElementById(id);
 export async function initApp(onReady) {
   showLoading(true);
   try {
-    const { data: { session } } = await db.auth.getSession();
+    const { data: { session } } = await db?.auth?.getSession() || { data: { session: null } };
     if (session) {
       await _onSignedIn(onReady);
     } else {
@@ -28,7 +28,7 @@ export async function initApp(onReady) {
   }
 
   // Listen for auth state changes (tab focus, token refresh, etc.)
-  db.auth.onAuthStateChange(async (event, session) => {
+  db?.auth?.onAuthStateChange(async (event, session) => {
     if (event === 'SIGNED_IN' && session) {
       await _onSignedIn(onReady);
     } else if (event === 'SIGNED_OUT') {
@@ -152,7 +152,7 @@ function _startAuthCanvas() {
       if (p.y < 0 || p.y > canvas.height) p.vy *= -1;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fillStyle = 'rgba(252,211,77,.35)';
+      ctx.fillStyle = 'rgba(159, 232, 112, 0.4)';
       ctx.fill();
     }
     for (let i = 0; i < pts.length; i++) {
@@ -164,7 +164,7 @@ function _startAuthCanvas() {
           ctx.beginPath();
           ctx.moveTo(pts[i].x, pts[i].y);
           ctx.lineTo(pts[j].x, pts[j].y);
-          ctx.strokeStyle = `rgba(252,211,77,${0.12 * (1 - d / 120)})`;
+          ctx.strokeStyle = `rgba(159, 232, 112, ${0.15 * (1 - d / 120)})`;
           ctx.lineWidth = 0.5;
           ctx.stroke();
         }

@@ -93,8 +93,8 @@
 <!-- HEADER -->
 <div class="header">
   <div class="h-left">
-    <div class="logo">Centa</div>
-    <div class="logo-tagline">Every cent. In control.</div>
+    <div class="logo">Paytin</div>
+    <div class="logo-tagline">Finance Mobile App</div>
     <span id="ownerBadge" class="owner-badge" style="display:none">👑</span>
     <div class="month-pill">
       <select id="monthSel" onchange="App.changeMonth()"></select>
@@ -128,9 +128,9 @@
 <!-- TODAY -->
 <div class="panel active" id="tab-today">
   <div class="kpi-grid">
+    <div class="kpi"><div class="kpi-val"        id="k-net">—</div><div class="kpi-lbl">Net Savings</div><div class="kpi-hint" id="k-net-h">—</div></div>
     <div class="kpi"><div class="kpi-val green" id="k-minc">—</div><div class="kpi-lbl">Month Income</div><div class="kpi-hint" id="k-minc-h">—</div></div>
     <div class="kpi"><div class="kpi-val red"   id="k-mexp">—</div><div class="kpi-lbl">Month Expenses</div><div class="kpi-hint" id="k-mexp-h">—</div></div>
-    <div class="kpi"><div class="kpi-val"        id="k-net">—</div><div class="kpi-lbl">Net Savings</div><div class="kpi-hint" id="k-net-h">—</div></div>
     <div class="kpi"><div class="kpi-val red"   id="k-owe">—</div><div class="kpi-lbl">I Owe</div><div class="kpi-hint" id="k-owe-h">—</div></div>
     <div class="kpi"><div class="kpi-val green" id="k-owed">—</div><div class="kpi-lbl">Owed To Me</div><div class="kpi-hint" id="k-owed-h">—</div></div>
   </div>
@@ -405,7 +405,10 @@
   
   <div class="bnav-fab-wrap">
     <button class="bnav-fab" onclick="Modals.openTx()" aria-label="Add transaction">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
     </button>
   </div>
 

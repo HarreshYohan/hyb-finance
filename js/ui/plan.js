@@ -76,7 +76,7 @@ function _calcScore(rate, debt, avgInc, goalPct, txCount) {
 }
 
 function _scoreColor(s) {
-  return s >= 75 ? '#1A7F4E' : s >= 50 ? '#B8860B' : '#C0392B';
+  return s >= 75 ? '#9FE870' : s >= 50 ? '#F59E0B' : '#EF4444';
 }
 
 function _scoreLabel(s) {
@@ -413,7 +413,7 @@ ${owner ? `
   <div class="plan-hero-inner">
     <div class="plan-score-wrap">
       <svg class="plan-score-svg" viewBox="0 0 130 130" aria-hidden="true">
-        <circle cx="65" cy="65" r="52" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="10"/>
+        <circle cx="65" cy="65" r="52" fill="none" stroke="var(--border2)" stroke-width="10"/>
         <circle id="planArc" cx="65" cy="65" r="52" fill="none" stroke="${color}"
           stroke-width="10" stroke-dasharray="${circ}" stroke-dashoffset="${circ}"
           stroke-linecap="round" transform="rotate(-90 65 65)"/>
@@ -519,7 +519,7 @@ function _initCanvas(score) {
     r: Math.random() * 1.8 + 0.7,
   }));
 
-  const rgb = score >= 75 ? '74,222,128' : score >= 50 ? '252,211,77' : '248,113,113';
+  const rgb = score >= 75 ? '159,232,112' : score >= 50 ? '245,158,11' : '239,68,68';
 
   const draw = () => {
     if (!document.getElementById('planBgCanvas')) { ro.disconnect(); return; }
