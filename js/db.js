@@ -7,8 +7,20 @@
 import { state } from './state.js';
 import { getCachedState, updateCache, clearCache } from './cache.js';
 
-const { url, anonKey } = window.APP_CONFIG.supabase;
-export const db = window.supabase.createClient(url, anonKey);
+// Ensure the global dependencies are available
+if (!window.APP_CONFIG) {
+  console.error('[DB] Critical Error: window.APP_CONFIG is missing. Ensure config.js is loaded.');
+}
+if (!window.supabase) {
+  console.error('[DB] Critical Error: window.supabase is missing. Ensure the CDN script is loaded.');
+}
+
+const config = window.APP_CONFIG?.supabase || { url: '', anonKey: '' };
+export const db = window.supabase?.createClient(config.url, config.anonKey);
+
+if (!db) {
+  console.error('[DB] Critical Error: Failed to create Supabase client.');
+}
 
 // ── Sync (read all user data into state) ──────────────────────────────────────
 

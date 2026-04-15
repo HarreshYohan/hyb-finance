@@ -9,11 +9,14 @@ import { monthLabel, fmtCurrency } from './utils.js';
 import { CATEGORY_COLOR } from './constants.js';
 
 const CHART_INSTANCES = {};
-const MUTED = '#9B9890';
+const MUTED = '#6B7280';
 const COLORS = {
-  green: 'rgba(26,127,78,.75)',
-  red:   'rgba(192,57,43,.75)',
-  blue:  '#1A5FA8',
+  accent: '#9FE870',     /* Pro Lime */
+  accentDim: 'rgba(159, 232, 112, 0.4)',
+  green: '#10B981',
+  red:   '#EF4444',
+  blue:  '#3B82F6',
+  text: '#111827',
 };
 
 function destroyChart(id) {
@@ -25,8 +28,8 @@ function destroyChart(id) {
 
 function axisDefaults() {
   return {
-    ticks: { color: MUTED, font: { size: 10 } },
-    grid:  { color: 'rgba(0,0,0,.04)' },
+    ticks: { color: MUTED, font: { family: 'Outfit', size: 10 } },
+    grid:  { color: 'rgba(0,0,0,.04)', drawBorder: false },
   };
 }
 
@@ -52,8 +55,8 @@ function _buildIncomeExpenseChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Income',   data: incs, backgroundColor: COLORS.green, borderRadius: 4, borderSkipped: false },
-        { label: 'Expenses', data: exps, backgroundColor: COLORS.red,   borderRadius: 4, borderSkipped: false },
+        { label: 'Income',   data: incs, backgroundColor: COLORS.accent, borderRadius: 6, borderSkipped: false },
+        { label: 'Expenses', data: exps, backgroundColor: COLORS.text,   borderRadius: 6, borderSkipped: false },
       ],
     },
     options: {
@@ -115,8 +118,8 @@ function _buildDailyChart() {
     data: {
       labels,
       datasets: [
-        { label: 'Income',  data: incs, backgroundColor: 'rgba(26,127,78,.6)',  borderRadius: 2, borderSkipped: false },
-        { label: 'Expense', data: exps, backgroundColor: 'rgba(192,57,43,.6)', borderRadius: 2, borderSkipped: false },
+        { label: 'Income',  data: incs, backgroundColor: COLORS.accent,  borderRadius: 4, borderSkipped: false },
+        { label: 'Expense', data: exps, backgroundColor: 'rgba(0,0,0,0.08)', borderRadius: 4, borderSkipped: false },
       ],
     },
     options: {
@@ -145,8 +148,8 @@ function _buildSavingsRateChart() {
       labels,
       datasets: [{
         label: 'Savings %', data: rates,
-        borderColor: COLORS.blue, backgroundColor: 'rgba(26,95,168,.08)',
-        fill: true, tension: .4, pointBackgroundColor: COLORS.blue, pointRadius: 4, borderWidth: 2,
+        borderColor: COLORS.accent, backgroundColor: COLORS.accentDim,
+        fill: true, tension: .4, pointBackgroundColor: COLORS.text, pointRadius: 4, borderWidth: 3,
       }],
     },
     options: {
@@ -275,8 +278,8 @@ function _buildYearForecastChart() {
         {
           label: 'Actual Net Savings',
           data: actualData,
-          backgroundColor: actualData.map(v => v === null ? 'transparent' : v >= 0 ? 'rgba(52,211,153,.75)' : 'rgba(248,113,113,.75)'),
-          borderRadius: 4,
+          backgroundColor: actualData.map(v => v === null ? 'transparent' : v >= 0 ? COLORS.accent : COLORS.text),
+          borderRadius: 6,
           borderSkipped: false,
           order: 2,
         },

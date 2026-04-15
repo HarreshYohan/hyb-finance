@@ -131,6 +131,7 @@ CREATE TABLE IF NOT EXISTS budgets (
   user_id       UUID NOT NULL REFERENCES auth.users ON DELETE CASCADE,
   category      TEXT NOT NULL,
   limit_amount  NUMERIC(14, 2) NOT NULL CHECK (limit_amount >= 0),
+  updated_at    TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE (user_id, category)
 );
 
@@ -467,8 +468,9 @@ CREATE POLICY "update_own_profile" ON profiles FOR UPDATE USING      (auth.uid()
 -- ─────────────────────────────────────────────────────────────────
 --  IDEMPOTENT COLUMN PATCHES  (safe to run on existing databases)
 --  Adds updated_at to any table that was created without it.
---  budgets and custom_categories intentionally excluded — no updated_at.
+--  budgets and custom_categories intentionally excluded — custom_categories has no updated_at.
 -- ─────────────────────────────────────────────────────────────────
+ALTER TABLE budgets                ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE transactions           ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE debts                  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
 ALTER TABLE goals                  ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ DEFAULT NOW();
@@ -494,12 +496,12 @@ $$;
 
 DO $$ DECLARE tbl TEXT;
 BEGIN
-  -- NOTE: budgets and custom_categories are excluded — they have no updated_at column.
+  -- NOTE: custom_categories is excluded — it has no updated_at column.
   FOREACH tbl IN ARRAY ARRAY[
     'profiles','transactions','debts','goals',
     'recurring_transactions','financial_plans',
     'credit_cards','credit_card_statements','credit_card_installments',
-    'investments','fixed_obligations','notification_prefs'
+    'investments','fixed_obligations','notification_prefs','budgets'
   ]
   LOOP
     EXECUTE format('

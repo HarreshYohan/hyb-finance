@@ -50,6 +50,9 @@ export function render() {
   if (document.getElementById('tab-plan')?.classList.contains('active')) {
     renderPlan();
   }
+  if (document.getElementById('tab-health')?.classList.contains('active')) {
+    renderHealth();
+  }
 
   // Save the current state to the local cache so refreshing the page instantly loads mutations
   updateCache(state);

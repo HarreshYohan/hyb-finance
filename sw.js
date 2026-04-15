@@ -3,7 +3,7 @@
 // This clears the old cache on all installed devices and forces fresh asset downloads.
 // Users get the update automatically on their next app open — no reinstall needed.
 // ─────────────────────────────────────────────────────────────────────────────
-const CACHE_NAME = 'centa-v5';
+const CACHE_NAME = 'centa-v6';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -61,8 +61,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
+  // Only handle GET requests and http/https schemes
   if (event.request.method !== 'GET') return;
+  if (!event.request.url.startsWith('http')) return;
   
   // Bypass Supabase API requests and other external APIs 
   // (we handle Supabase API caching in js/cache.js)
