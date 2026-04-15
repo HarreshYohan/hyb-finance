@@ -3,7 +3,7 @@
 // This clears the old cache on all installed devices and forces fresh asset downloads.
 // Users get the update automatically on their next app open — no reinstall needed.
 // ─────────────────────────────────────────────────────────────────────────────
-const CACHE_NAME = 'centa-v6';
+const CACHE_NAME = 'centa-v7';
 
 const ASSETS_TO_CACHE = [
   '/',
@@ -30,6 +30,8 @@ const ASSETS_TO_CACHE = [
   '/js/ui/toast.js',
   '/js/ui/today.js',
   '/js/ui/health.js',
+  '/js/ui/landing.js',
+  '/assets/icon.png',
   '/config.js',
   '/manifest.json'
 ];
