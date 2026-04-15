@@ -37,6 +37,52 @@
   <style>@keyframes spin { 100% { transform: rotate(360deg); } }</style>
 </div>
 
+<!-- ═══════════════════ LANDING PAGE ══════════════════════════════ -->
+<div id="landingPage" class="landing-page">
+  <div class="landing-inner">
+    <div class="l-hero-content">
+      <div class="l-eyebrow">Finance Mobile App</div>
+      <h1 class="l-title">Every cent. <span>In control.</span></h1>
+      <p class="l-desc">Master your wealth with automated insights, debt avalanche planning, and cloud-backed security. No spreadsheets. No stress.</p>
+      
+      <div class="l-actions">
+        <button class="l-btn-primary" onclick="Landing.getStarted()">Get Started</button>
+        <button class="l-btn-secondary" onclick="Landing.learnMore()">Learn More</button>
+      </div>
+
+      <div class="l-stats-grid">
+        <div class="l-stat-item">
+          <div class="l-stat-val">100%</div>
+          <div class="l-stat-lbl">Private & Secure</div>
+        </div>
+        <div class="l-stat-item">
+          <div class="l-stat-val">AI</div>
+          <div class="l-stat-lbl">Smart Insights</div>
+        </div>
+        <div class="l-stat-item">
+          <div class="l-stat-val">Sync</div>
+          <div class="l-stat-lbl">Real-time Cloud</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="l-visuals">
+      <div class="l-card-mock">
+        <div class="l-mock-label">Monthly Savings</div>
+        <div class="l-mock-val">LKR 42,500</div>
+        <div class="l-mock-chart">
+          <div class="l-mock-bar" style="height: 40%"></div>
+          <div class="l-mock-bar" style="height: 60%"></div>
+          <div class="l-mock-bar" style="height: 45%"></div>
+          <div class="l-mock-bar active" style="height: 90%"></div>
+          <div class="l-mock-bar" style="height: 70%"></div>
+        </div>
+        <div style="font-size: 11px; color: var(--text3); font-weight: 500;">✓ You are saving 18% more than last month</div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ AUTH PAGE ════════════════════════════════ -->
 <div id="authPage" class="auth-page" style="display:none">
   <canvas id="authCanvas" class="auth-canvas" aria-hidden="true"></canvas>
@@ -93,7 +139,7 @@
 <!-- HEADER -->
 <div class="header">
   <div class="h-left">
-    <div class="logo">Paytin</div>
+    <div class="logo">Centa</div>
     <div class="logo-tagline">Finance Mobile App</div>
     <span id="ownerBadge" class="owner-badge" style="display:none">👑</span>
     <div class="month-pill">

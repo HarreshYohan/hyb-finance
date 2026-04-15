@@ -6,6 +6,7 @@
 
 import { db, syncAll, fetchProfile } from './db.js';
 import { state, resetState } from './state.js';
+import { showLandingPage, hideLandingPage } from './ui/landing.js';
 
 const $ = id => document.getElementById(id);
 
@@ -18,11 +19,11 @@ export async function initApp(onReady) {
     if (session) {
       await _onSignedIn(onReady);
     } else {
-      showAuthPage();
+      showLandingPage();
     }
   } catch (err) {
     console.error('[Auth] initApp error:', err);
-    showAuthPage();
+    showLandingPage();
   } finally {
     showLoading(false);
   }
@@ -111,10 +112,12 @@ export async function signOut() {
 // ── UI helpers ────────────────────────────────────────────────────────────────
 
 function showAuthPage() {
-  $('authPage').style.display = 'flex';
-  $('mainApp').style.display  = 'none';
-  $('auth-email').value       = '';
-  $('auth-pass').value        = '';
+  hideLandingPage();
+  $('landingPage').style.display = 'none';
+  $('authPage').style.display    = 'flex';
+  $('mainApp').style.display     = 'none';
+  $('auth-email').value          = '';
+  $('auth-pass').value           = '';
   hideAuthError();
   _startAuthCanvas();
 }
@@ -176,6 +179,7 @@ function _startAuthCanvas() {
 }
 
 function showMainApp() {
+  hideLandingPage();
   $('authPage').style.display = 'none';
   $('mainApp').style.display  = 'block';
 }
