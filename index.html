@@ -8,7 +8,7 @@
 <!-- PWA & Security -->
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#0B0B0D">
-<link rel="apple-touch-icon" href="/assets/icon.svg">
+<link rel="apple-touch-icon" href="/assets/icon.png">
 <link rel="apple-touch-icon" sizes="192x192" href="/assets/icon-192.png">
 <link rel="apple-touch-icon" sizes="512x512" href="/assets/icon-512.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -39,36 +39,38 @@
 
 <!-- ═══════════════════ LANDING PAGE ══════════════════════════════ -->
 <div id="landingPage" class="landing-page">
+
+  <!-- NAVIGATION -->
+  <nav class="l-nav">
+    <div class="l-nav-inner">
+      <div class="l-logo">
+        <img src="/assets/icon.png" alt="Centa Logo">
+        <span>Centa</span>
+      </div>
+      <div class="l-nav-actions">
+        <button class="l-nav-btn" onclick="Landing.getStarted()">Login</button>
+        <button class="l-nav-btn primary" onclick="Landing.getStarted()">Join for Free</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
   <div class="landing-inner">
     <div class="l-hero-content">
-      <div class="l-eyebrow">Finance Mobile App</div>
-      <h1 class="l-title">Every cent. <span>In control.</span></h1>
-      <p class="l-desc">Master your wealth with automated insights, debt avalanche planning, and cloud-backed security. No spreadsheets. No stress.</p>
-      
+      <div class="l-eyebrow">Intelligent Personal Finance</div>
+      <h1 class="l-title">Your wealth.<br><span>Fully in command.</span></h1>
+      <p class="l-desc">Stop guessing where your money goes. Centa gives you <strong>crystal-clear financial clarity</strong> — powered by an AI insight engine, a debt payoff planner, and real-time cloud sync. <strong>No spreadsheets. No hidden fees. No compromises.</strong></p>
+
       <div class="l-actions">
-        <button class="l-btn-primary" onclick="Landing.getStarted()">Get Started</button>
-        <button class="l-btn-secondary" onclick="Landing.learnMore()">Learn More</button>
+        <button class="l-btn-primary" onclick="Landing.getStarted()">Start for Free &rarr;</button>
+        <button class="l-btn-secondary" onclick="Landing.learnMore()">See How It Works</button>
       </div>
 
-      <div class="l-stats-grid">
-        <div class="l-stat-item">
-          <div class="l-stat-val">100%</div>
-          <div class="l-stat-lbl">Private & Secure</div>
-        </div>
-        <div class="l-stat-item">
-          <div class="l-stat-val">AI</div>
-          <div class="l-stat-lbl">Smart Insights</div>
-        </div>
-        <div class="l-stat-item">
-          <div class="l-stat-val">Sync</div>
-          <div class="l-stat-lbl">Real-time Cloud</div>
-        </div>
-      </div>
     </div>
 
     <div class="l-visuals">
       <div class="l-card-mock">
-        <div class="l-mock-label">Monthly Savings</div>
+        <div class="l-mock-label">Net Savings · This Month</div>
         <div class="l-mock-val">LKR 42,500</div>
         <div class="l-mock-chart">
           <div class="l-mock-bar" style="height: 40%"></div>
@@ -77,21 +79,85 @@
           <div class="l-mock-bar active" style="height: 90%"></div>
           <div class="l-mock-bar" style="height: 70%"></div>
         </div>
-        <div style="font-size: 11px; color: var(--text3); font-weight: 500;">✓ You are saving 18% more than last month</div>
+        <div class="l-mock-insight">✦ You are saving <strong>18% more</strong> than last month</div>
+        <div class="l-mock-badges">
+          <span class="l-mock-badge">Debt Tracker</span>
+          <span class="l-mock-badge l-mock-badge--accent">Goal: On Track</span>
+        </div>
       </div>
     </div>
   </div>
+  
+  <!-- MARQUEE -->
+  <div class="l-marquee" aria-hidden="true">
+    <div class="l-marquee-content">
+      <span>✦ Privacy First</span>
+      <span>✦ Automated Insights</span>
+      <span>✦ Cloud Sync</span>
+      <span>✦ Debt Avalanche Engine</span>
+      <span>✦ 0% Subscription Fees</span>
+      <span>✦ Smart Goals</span>
+      <span>✦ Real‑time Visuals</span>
+      <!-- Double for seamless loop -->
+      <span>✦ Privacy First</span>
+      <span>✦ Automated Insights</span>
+      <span>✦ Cloud Sync</span>
+      <span>✦ Debt Avalanche Engine</span>
+      <span>✦ 0% Subscription Fees</span>
+      <span>✦ Smart Goals</span>
+      <span>✦ Real‑time Visuals</span>
+    </div>
+  </div>
+
+  <!-- WHY CENTA -->
+  <div class="l-why-section">
+    <div class="l-why-heading">Why Centa?</div>
+    <p class="l-why-sub">Built for people who want <strong>real control over their money</strong> — not just another app with pretty charts that changes nothing.</p>
+    <div class="l-features-swiper" id="featureSwiper">
+      <!-- 1. DEBT AVALANCHE -->
+      <div class="l-feature-card reveal" style="--delay: 0.1s">
+        <div class="l-feature-title">Smart Debt Payoff</div>
+        <div class="l-feature-desc">Crush your interest with our <strong>Avalanche Engine</strong>. We calculate the fastest path to freedom.</div>
+      </div>
+
+      <!-- 2. AI INSIGHTS -->
+      <div class="l-feature-card reveal" style="--delay: 0.2s">
+        <div class="l-feature-title">AI Insight Engine</div>
+        <div class="l-feature-desc">Receive <strong>personalised pattern analysis</strong> and anomaly alerts generated instantly.</div>
+      </div>
+
+      <!-- 3. PRIVACY & SYNC -->
+      <div class="l-feature-card reveal" style="--delay: 0.3s">
+        <div class="l-feature-title">Private Cloud Sync</div>
+        <div class="l-feature-desc">Your data belongs to <strong>you alone</strong>. End-to-end encrypted sync ensures wealth stays private.</div>
+      </div>
+    </div>
+    <div class="l-swiper-dots">
+      <div class="l-dot active" data-index="0"></div>
+      <div class="l-dot" data-index="1"></div>
+      <div class="l-dot" data-index="2"></div>
+    </div>
+  </div>
+
+  <!-- QUOTES SECTION -->
+  <div class="l-quotes-section">
+    <div class="l-quote-card">
+      <div class="l-quote-icon">“</div>
+      <p class="l-quote-text">Do not save what is left after spending; instead <strong>spend what is left after saving</strong>.</p>
+      <div class="l-quote-author">— Warren Buffett</div>
+    </div>
+  </div>
+
 </div>
 
 <!-- ═══════════════════ AUTH PAGE ════════════════════════════════ -->
 <div id="authPage" class="auth-page" style="display:none">
   <canvas id="authCanvas" class="auth-canvas" aria-hidden="true"></canvas>
   <div class="auth-card">
-    <div class="auth-brand">
-      <div class="auth-brand-ring"></div>
-      <div class="auth-brand-letter">C</div>
+    <div class="auth-logo">
+      <img src="/assets/icon.png" alt="Centa Logo">
+      <h2>Centa</h2>
     </div>
-    <div class="auth-logo">Centa</div>
     <div class="auth-tagline">Every cent. In control.</div>
     <div id="auth-error" class="auth-error" style="display:none"></div>
     <div class="auth-field-wrap">

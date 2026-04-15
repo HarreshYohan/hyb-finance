@@ -21,6 +21,47 @@ export function showLandingPage() {
       setTimeout(() => bar.style.height = h, i * 100);
     });
   }, 500);
+
+  initScrollAnimations();
+}
+
+function initScrollAnimations() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+  initFeatureSwiper();
+}
+
+function initFeatureSwiper() {
+  const swiper = $('featureSwiper');
+  const dots = document.querySelectorAll('.l-dot');
+  if (!swiper || !dots.length) return;
+
+  swiper.addEventListener('scroll', () => {
+    const slideWidth = swiper.querySelector('.l-feature-card').offsetWidth + 24;
+    const scrollPos = swiper.scrollLeft;
+    const index = Math.round(scrollPos / slideWidth);
+
+    dots.forEach((dot, i) => {
+      dot.classList.toggle('active', i === index);
+    });
+  });
+
+  // Dot clicking
+  dots.forEach(dot => {
+    dot.addEventListener('click', () => {
+      const index = parseInt(dot.dataset.index);
+      const slideWidth = swiper.querySelector('.l-feature-card').offsetWidth + 24;
+      swiper.scrollTo({ left: index * slideWidth, behavior: 'smooth' });
+    });
+  });
 }
 
 export function hideLandingPage() {
@@ -45,7 +86,6 @@ window.Landing = {
     $('authPage').style.display = 'flex';
   },
   learnMore: () => {
-    // Current landing page is one screen, but we could add more sections
-    document.querySelector('.l-stats-grid')?.scrollIntoView({ behavior: 'smooth' });
+    document.querySelector('.l-why-section')?.scrollIntoView({ behavior: 'smooth' });
   }
 };
